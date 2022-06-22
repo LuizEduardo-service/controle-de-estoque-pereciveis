@@ -1,5 +1,7 @@
 import os
-from tkinter import * 
+from tkinter import *
+from tkinter import font
+from turtle import width 
 from tkcalendar import DateEntry
 
 
@@ -29,16 +31,44 @@ class TelaPrincipal:
         return param
 
     def tela_inicial(self):
-        self.caminho = os.getcwd()
-        print(self.caminho, '************')
         self.root.title('Controle de Validade')
         p = self.centralizacao_tela(1440,750,self.root)
         self.root.geometry("%dx%d+%d+%d" % (p[0],p[1],p[2],p[3]))
         self.imagem_tela = PhotoImage(file=r'..\image\tela1.png')
+        self.imagem_pesquisa = PhotoImage(file=r'..\image\pesquisa.png',width=43,height=43)
+       
         lb_image = Label(self.root,image=self.imagem_tela)
         lb_image.place(x=0, y=0)
-        calendario = DateEntry(self.root,selectmode='day')
-        # calendario.place(x=400, y=300)
+
+        dta_fab = DateEntry(self.root,
+                            selectmode='day',
+                            font=('Poppins',20), 
+                            justify='center')
+        dta_venc = DateEntry(self.root,
+                            selectmode='day',
+                            font=('Poppins',20), 
+                            justify='center')
+
+        dta_fab.place(x=60, y=263, width=307, height=43)
+        dta_venc.place(x=399, y=263, width=307, height=43)
+
+        #botões
+        bt_receber = Button(self.root,
+                            text='Aguardando analise...',
+                            cursor='hand2')
+        bt_pesquisa_sku = Button(self.root,
+                            text='',
+                            cursor='hand2',
+                            image=self.imagem_pesquisa)
+
+
+        bt_receber.place(x=60, y=333,width=1328, height=50)
+        bt_pesquisa_sku.place(x=280, y=82,width=42, height=39)
+
+        txt_produto =Text(self.root,
+                            font=('Poppins', 20))
+
+        txt_produto.place(x=60, y=79,width=197,height=43)
 
 
 
