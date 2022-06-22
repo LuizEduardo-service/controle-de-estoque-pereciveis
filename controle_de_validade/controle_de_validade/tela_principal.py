@@ -38,9 +38,8 @@ class TelaPrincipal:
         lb_image = Label(self.root,image=self.imagem_tela)
         lb_image.place(x=0, y=0)
         calendario = DateEntry(self.root,selectmode='day')
-        calendario.place(x=400, y=300)
-        val = calendario.get_date()
-        print(val)
+        # calendario.place(x=400, y=300)
+
 
 
 if __name__ =='__main__':
