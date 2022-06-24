@@ -1,19 +1,21 @@
 import os
 from time import sleep
 from tkinter import *
+from tkinter import font
+import easygui
 from tkcalendar import DateEntry
 from datetime import datetime
 
 
 
 root = Tk()
-
+FONT_INIT =('Poppins', 15)
 class TelaPrincipal:
 
     def __init__(self) -> None:
         self.root = root
         self.data_recebimento = datetime.now().date()
-        self.tela_inicial()
+        self.tela()
         self.root.mainloop()
 
     def centralizar_tela(self):
@@ -54,6 +56,10 @@ class TelaPrincipal:
             self.dta_fab._set_text('')
             self.dta_venc._set_text('')
             self.btReceber.set('Aguardando Analise...')
+
+    def destroi_widget(self):
+        for widget in self.root.winfo_children():
+            widget.destroy()
 
     def procura_produto(self, numProduto):
         produtos = {
@@ -137,6 +143,16 @@ class TelaPrincipal:
         elif status_rec == 'PRODUTO NÃO LIBERADO PARA RECEBIMENTO' and status_rec_validado == 'PRODUTO NÃO LIBERADO PARA RECEBIMENTO':
             pass
 
+    def define_diretorio(self, tipo: str) -> str:
+            diretorio = easygui.diropenbox()
+            if diretorio:
+                if tipo == 'bd':
+                    self.dir_bd.set(diretorio)
+                elif tipo == 'pdf':
+                    self.dir_pdf.set(diretorio)
+                elif tipo == 'rel':
+                    self.dir_relatorio.set(diretorio)
+
 
     def recebimento_fora_prazo(self):
         self.foraPrazo = Toplevel()
@@ -145,26 +161,19 @@ class TelaPrincipal:
         self.root.geometry("%dx%d+%d+%d" % (p[0],p[1],p[2],p[3]))
         self.imagem_tela = PhotoImage(file=r'..\image\tela1.png')
 
-
-    def tela_inicial(self):
-        self.usuario='Luiz Eduardo'
-        self.matricula = '3896595'
-        self.root.title('Controle de Validade')
-        p = self.centralizacao_tela(1440,750,self.root)
-        self.root.geometry("%dx%d+%d+%d" % (p[0],p[1],p[2],p[3]))
+    def componentes_tela_inicial(self):
+        self.destroi_widget()
         self.imagem_tela = PhotoImage(file=r'..\image\tela1.png')
-        # self.imagem_tela = PhotoImage(file=r'controle-de-estoque-pereciveis\controle_de_validade\image\tela1.png')
-        # self.imagem_pesquisa = PhotoImage(file=r'controle-de-estoque-pereciveis\controle_de_validade\image\pesquisa.png')
         self.imagem_pesquisa = PhotoImage(file=r'..\image\pesquisar.png',width=64,height=30)
        
         lb_image = Label(self.root,image=self.imagem_tela)
         lb_image.place(x=0, y=0)
-
-        #label data
+       #label data
         self.dta_fab = DateEntry(self.root,
                             selectmode='day',
                             font=('Poppins',20), 
                             justify='center')
+
         self.dta_venc = DateEntry(self.root,
                             selectmode='day',
                             font=('Poppins',20), 
@@ -201,7 +210,9 @@ class TelaPrincipal:
         self.bt_pesquisa_sku.place(x=281, y=83,width=60, height=40)
 
         #campo de texto
-        self.txt_produto = Entry(self.root,font=('Poppins', 20), textvariable=self.numSku)
+        self.txt_produto = Entry(self.root,
+                                font=('Poppins', 20), 
+                                textvariable=self.numSku)
         self.txt_produto.place(x=60, y=79,width=197,height=43)
 
         #label
@@ -268,6 +279,142 @@ class TelaPrincipal:
         self.lb_matricula.place(x=1179, y=99, width=251, height=37)
         self.lb_msg.place(x=345, y=80, width=554, height=43)
 
+    def componentes_tela_config(self):
+        self.image_config = PhotoImage(file=r'../image/config.png')
+        self.lb_img_config = Label(self.root,image=self.image_config)
+        self.lb_img_config.place(x=0, y=0)
+
+        # campos de entrada
+        self.dir_bd = StringVar()
+        self.dir_pdf = StringVar()
+        self.dir_relatorio = StringVar()
+        self.nome_pdf =StringVar()
+        self.nome_relatorio = StringVar()
+
+
+
+        self.txt_dir_bd = Entry(self.root,
+                            font=FONT_INIT,
+                            textvariable=self.dir_bd,
+                            )
+
+        self.txt_dir_pdf = Entry(self.root,
+                            font=FONT_INIT,
+                            textvariable=self.dir_pdf,
+                            )
+
+        self.txt_dir_relatorio = Entry(self.root,
+                            font=FONT_INIT,
+                            textvariable=self.dir_relatorio,
+                            )
+
+        self.txt_nome_pdf = Entry(self.root,
+                            font=FONT_INIT,
+                            textvariable=self.nome_pdf,
+                            )
+
+        self.txt_nome_relatorio = Entry(self.root,
+                            font=FONT_INIT,
+                            textvariable=self.nome_relatorio,
+                            )
+
+        self.txt_dir_bd.place(x=70, y=186, width=826, height=30)
+        self.txt_dir_pdf.place(x=70, y=265, width=826, height=30)
+        self.txt_dir_relatorio.place(x=70, y=344, width=826, height=30)
+        self.txt_nome_pdf.place(x=1012, y=265, width=252, height=30)
+        self.txt_nome_relatorio.place(x=1012, y=346, width=252, height=30)
+
+
+        #botoes de localiza pasta
+        self.bd =StringVar()
+        self.pdf =StringVar()
+        self.rel =StringVar()
+        self.btn_dir_bd = Button(self.root,
+                                text='...',
+                                font=FONT_INIT,
+                                justify='center',
+                                command=lambda:self.define_diretorio('bd'),
+                                )
+
+        self.btn_dir_pdf = Button(self.root,
+                                text='...',
+                                font=FONT_INIT,
+                                justify='center',
+                                command=lambda:self.define_diretorio('pdf'),
+                                )
+
+        self.btn_dir_relatorio = Button(self.root,
+                                        text='...',
+                                        font=FONT_INIT,
+                                        justify='center',
+                                        command=lambda:self.define_diretorio('rel'),
+                                        )
+
+        self.btn_dir_bd.place(x=915, y=186, width=55, height=30)
+        self.btn_dir_pdf.place(x=915, y=265, width=55, height=30)
+        self.btn_dir_relatorio.place(x=915, y=344, width=55, height=30)
+
+        #escala de valores
+        self.scl_rec_minimo = IntVar()
+        self.scl_alert_comercial = IntVar()
+
+        self.sc_rec_minimo = Scale(self.root, 
+                                    from_=0, to=100,
+                                    variable=self.scl_rec_minimo, 
+                                    orient='horizontal',
+                                    tickinterval=5)
+
+        self.sc_alert_comercial = Scale(self.root, 
+                                        from_=0, to=100,
+                                        variable=self.scl_alert_comercial, 
+                                        orient='horizontal',
+                                        tickinterval=5)
+        
+        self.ajd_rec_minimo = Label(self.root,
+                                    text='?',
+                                    font=('Poppins', 10))
+
+        self.ajd_alert_comercial = Label(self.root,
+                                        text='?',
+                                        font=('Poppins', 10))
+
+        self.sc_rec_minimo.place(x=70, y=532, width=826, height=30)
+        self.sc_alert_comercial.place(x=70, y=618, width=826, height=30)
+
+        self.ajd_rec_minimo.place(x=408, y=512, width=13, height=13)
+        self.ajd_alert_comercial.place(x=360, y=598, width=13, height=13)
+
+        self.salva_config = StringVar()
+        self.cancelar_config = StringVar()
+
+        self.btn_salva_config = Button(self.root,
+                        text='SALVAR',
+                        font=FONT_INIT,
+                        justify='center',
+                        command=lambda:self.componentes_tela_inicial()
+                        )
+
+        self.btn_cancelar_config = Button(self.root,
+                        text='CANCELAR',
+                        font=FONT_INIT,
+                        justify='center',
+                        # textvariable=self.cancelar_config,
+                        )
+        
+
+        self.btn_salva_config.place(x=1250, y=690, width=140, height=30)
+        self.btn_cancelar_config.place(x=1073, y=690, width=140, height=30)
+
+    def tela(self):
+        self.usuario='Luiz Eduardo'
+        self.matricula = '3896595'
+        self.root.title('Controle de Validade')
+        p = self.centralizacao_tela(1440,750,self.root)
+        self.root.geometry("%dx%d+%d+%d" % (p[0],p[1],p[2],p[3]))
+
+        #tela inicial:
+        self.componentes_tela_config()
+       
 
 if __name__ =='__main__':
     TelaPrincipal()
