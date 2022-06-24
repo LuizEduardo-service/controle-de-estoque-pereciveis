@@ -1,21 +1,32 @@
 import os
 from time import sleep
 from tkinter import *
+<<<<<<< HEAD
 from tkinter import font
 import easygui
+=======
+>>>>>>> 1b3fa7e0a656cb4e7fe9fa5f8a1b09a1999e1274
 from tkcalendar import DateEntry
 from datetime import datetime
 
 
 
 root = Tk()
+<<<<<<< HEAD
 FONT_INIT =('Poppins', 15)
+=======
+
+>>>>>>> 1b3fa7e0a656cb4e7fe9fa5f8a1b09a1999e1274
 class TelaPrincipal:
 
     def __init__(self) -> None:
         self.root = root
         self.data_recebimento = datetime.now().date()
+<<<<<<< HEAD
         self.tela()
+=======
+        self.tela_inicial()
+>>>>>>> 1b3fa7e0a656cb4e7fe9fa5f8a1b09a1999e1274
         self.root.mainloop()
 
     def centralizar_tela(self):
@@ -57,10 +68,13 @@ class TelaPrincipal:
             self.dta_venc._set_text('')
             self.btReceber.set('Aguardando Analise...')
 
+<<<<<<< HEAD
     def destroi_widget(self):
         for widget in self.root.winfo_children():
             widget.destroy()
 
+=======
+>>>>>>> 1b3fa7e0a656cb4e7fe9fa5f8a1b09a1999e1274
     def procura_produto(self, numProduto):
         produtos = {
             123:[
@@ -143,6 +157,7 @@ class TelaPrincipal:
         elif status_rec == 'PRODUTO NÃO LIBERADO PARA RECEBIMENTO' and status_rec_validado == 'PRODUTO NÃO LIBERADO PARA RECEBIMENTO':
             pass
 
+<<<<<<< HEAD
     def define_diretorio(self, tipo: str) -> str:
             diretorio = easygui.diropenbox()
             if diretorio:
@@ -153,6 +168,8 @@ class TelaPrincipal:
                 elif tipo == 'rel':
                     self.dir_relatorio.set(diretorio)
 
+=======
+>>>>>>> 1b3fa7e0a656cb4e7fe9fa5f8a1b09a1999e1274
 
     def recebimento_fora_prazo(self):
         self.foraPrazo = Toplevel()
@@ -161,19 +178,40 @@ class TelaPrincipal:
         self.root.geometry("%dx%d+%d+%d" % (p[0],p[1],p[2],p[3]))
         self.imagem_tela = PhotoImage(file=r'..\image\tela1.png')
 
+<<<<<<< HEAD
     def componentes_tela_inicial(self):
         self.destroi_widget()
         self.imagem_tela = PhotoImage(file=r'..\image\tela1.png')
+=======
+
+    def tela_inicial(self):
+        self.usuario='Luiz Eduardo'
+        self.matricula = '3896595'
+        self.root.title('Controle de Validade')
+        p = self.centralizacao_tela(1440,750,self.root)
+        self.root.geometry("%dx%d+%d+%d" % (p[0],p[1],p[2],p[3]))
+        self.imagem_tela = PhotoImage(file=r'..\image\tela1.png')
+        # self.imagem_tela = PhotoImage(file=r'controle-de-estoque-pereciveis\controle_de_validade\image\tela1.png')
+        # self.imagem_pesquisa = PhotoImage(file=r'controle-de-estoque-pereciveis\controle_de_validade\image\pesquisa.png')
+>>>>>>> 1b3fa7e0a656cb4e7fe9fa5f8a1b09a1999e1274
         self.imagem_pesquisa = PhotoImage(file=r'..\image\pesquisar.png',width=64,height=30)
        
         lb_image = Label(self.root,image=self.imagem_tela)
         lb_image.place(x=0, y=0)
+<<<<<<< HEAD
        #label data
+=======
+
+        #label data
+>>>>>>> 1b3fa7e0a656cb4e7fe9fa5f8a1b09a1999e1274
         self.dta_fab = DateEntry(self.root,
                             selectmode='day',
                             font=('Poppins',20), 
                             justify='center')
+<<<<<<< HEAD
 
+=======
+>>>>>>> 1b3fa7e0a656cb4e7fe9fa5f8a1b09a1999e1274
         self.dta_venc = DateEntry(self.root,
                             selectmode='day',
                             font=('Poppins',20), 
@@ -210,9 +248,13 @@ class TelaPrincipal:
         self.bt_pesquisa_sku.place(x=281, y=83,width=60, height=40)
 
         #campo de texto
+<<<<<<< HEAD
         self.txt_produto = Entry(self.root,
                                 font=('Poppins', 20), 
                                 textvariable=self.numSku)
+=======
+        self.txt_produto = Entry(self.root,font=('Poppins', 20), textvariable=self.numSku)
+>>>>>>> 1b3fa7e0a656cb4e7fe9fa5f8a1b09a1999e1274
         self.txt_produto.place(x=60, y=79,width=197,height=43)
 
         #label
@@ -279,6 +321,7 @@ class TelaPrincipal:
         self.lb_matricula.place(x=1179, y=99, width=251, height=37)
         self.lb_msg.place(x=345, y=80, width=554, height=43)
 
+<<<<<<< HEAD
     def componentes_tela_config(self):
         self.image_config = PhotoImage(file=r'../image/config.png')
         self.lb_img_config = Label(self.root,image=self.image_config)
@@ -415,6 +458,8 @@ class TelaPrincipal:
         #tela inicial:
         self.componentes_tela_config()
        
+=======
+>>>>>>> 1b3fa7e0a656cb4e7fe9fa5f8a1b09a1999e1274
 
 if __name__ =='__main__':
     TelaPrincipal()
