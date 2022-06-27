@@ -7,11 +7,13 @@ from tkinter import font
 import easygui
 from tkcalendar import DateEntry
 from datetime import datetime
+from controle_de_validade.layout_pdf import Relatorios
 
 
 
 root = Tk()
 FONT_INIT =('Poppins', 15)
+
 class TelaPrincipal:
 
     def __init__(self) -> None:
@@ -110,6 +112,21 @@ class TelaPrincipal:
         # return format(data_final,'%d/%m/%Y')
         return data_final
 
+    def gerar_pdf(self):
+            gerarPdf = Relatorios(
+                                    numSku = self.numSku.get(),
+                                    descri_produto = self.descri_produto.get(),
+                                    categoria = self.categoria.get(),
+                                    dta_fab = self.dta_fab.get_date(),
+                                    dta_venc = self.dta_venc.get_date(),
+                                    rec_minimo = self.rec_minimo.get(),
+                                    alerta_comercial = self.alerta_comercial.get(),
+                                    dta_recebimento = self.convert_data_str(self.data_recebimento),
+                                    usuario = self.l_usuario.get(),
+                                    matricula = self.l_matricula.get()
+            )
+            gerarPdf.gerar_relatorio()
+            
     def executa_calculos(self):
         data_fab = self.dta_fab.get_date()
         data_venc = self.dta_venc.get_date()
@@ -139,8 +156,8 @@ class TelaPrincipal:
 
         status_rec_validado = self.btReceber.get()
         if status_rec == 'PRODUTO LIBERADO PARA RECEBIMENTO' and status_rec_validado == 'PRODUTO LIBERADO PARA RECEBIMENTO':
-
-            self.limpa_campos(1)
+            self.gerar_pdf()
+            # self.limpa_campos(1)
             self.btReceber.set('RECEBIMENTO FINALIZADO')
             self.txt_produto.focus
         elif status_rec == 'PRODUTO NÃO LIBERADO PARA RECEBIMENTO' and status_rec_validado == 'PRODUTO NÃO LIBERADO PARA RECEBIMENTO':
@@ -175,6 +192,7 @@ class TelaPrincipal:
                             selectmode='day',
                             font=('Poppins',20), 
                             justify='center')
+
         self.dta_venc = DateEntry(self.root,
                             selectmode='day',
                             font=('Poppins',20), 
@@ -188,12 +206,14 @@ class TelaPrincipal:
         #botões
         self.btReceber = StringVar()
         self.numSku = IntVar()
+
         self.bt_receber = Button(self.root,
                             text='Aguardando analise...',
                             textvariable=self.btReceber,
                             cursor='hand2',
                             font=('Poppins', 20),
                             command=lambda:self.executa_calculos())
+
         self.btReceber.set('Aguardando Analise...')
 
         self.bt_pesquisa_sku = Button(self.root,
@@ -214,7 +234,8 @@ class TelaPrincipal:
         self.txt_produto = Entry(self.root,
                                 font=('Poppins', 20), 
                                 textvariable=self.numSku)
-        self.txt_produto.place(x=60, y=79,width=197,height=43)
+
+        self.txt_produto.place(x=60, y=79, width=197, height=43)
 
         #label
         self.dta_recebimento = StringVar()
@@ -222,8 +243,8 @@ class TelaPrincipal:
         self.alerta_comercial = StringVar()
         self.descri_produto = StringVar()
         self.categoria = StringVar()
-        self.lb_usuario = StringVar()
-        self.lb_matricula = StringVar()
+        self.l_usuario = StringVar()
+        self.l_matricula = StringVar()
         self.msg = StringVar()
 
 
@@ -257,13 +278,15 @@ class TelaPrincipal:
                                 text='Usuario: ' + self.usuario,
                                 font=('Poppins', 15),  
                                 justify='center',
-                                bg='#ffffff')
+                                bg='#ffffff',
+                                textvariable=self.l_usuario)
 
         self.lb_matricula =Label(self.root,
                                     text="Matricula: " + self.matricula, 
                                     font=('Poppins', 15), 
                                     justify='center',
-                                    bg='#ffffff')
+                                    bg='#ffffff',
+                                    textvariable=self.l_matricula)
 
         self.lb_msg =Label(self.root,
                             textvariable=self.msg, 
