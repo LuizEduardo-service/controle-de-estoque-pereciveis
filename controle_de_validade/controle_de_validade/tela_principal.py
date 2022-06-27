@@ -140,9 +140,11 @@ class TelaPrincipal:
         status_rec_validado = self.btReceber.get()
         if status_rec == 'PRODUTO LIBERADO PARA RECEBIMENTO' and status_rec_validado == 'PRODUTO LIBERADO PARA RECEBIMENTO':
 
-            self.limpa_campos(1)
             self.btReceber.set('RECEBIMENTO FINALIZADO')
-            self.txt_produto.focus
+            self.bt_receber.configure(bg='#676AA9')
+            self.limpa_campos(1)
+            self.txt_produto.focus_force()
+            
         elif status_rec == 'PRODUTO NÃO LIBERADO PARA RECEBIMENTO' and status_rec_validado == 'PRODUTO NÃO LIBERADO PARA RECEBIMENTO':
             pass
 
@@ -175,6 +177,7 @@ class TelaPrincipal:
                             selectmode='day',
                             font=('Poppins',20), 
                             justify='center')
+
         self.dta_venc = DateEntry(self.root,
                             selectmode='day',
                             font=('Poppins',20), 
@@ -188,12 +191,16 @@ class TelaPrincipal:
         #botões
         self.btReceber = StringVar()
         self.numSku = IntVar()
+
         self.bt_receber = Button(self.root,
                             text='Aguardando analise...',
                             textvariable=self.btReceber,
                             cursor='hand2',
+                            bg='#676AA9',
+                            fg='#ffffff',
                             font=('Poppins', 20),
                             command=lambda:self.executa_calculos())
+
         self.btReceber.set('Aguardando Analise...')
 
         self.bt_pesquisa_sku = Button(self.root,
@@ -208,12 +215,14 @@ class TelaPrincipal:
                             command=lambda:self.procura_produto(self.numSku.get()))
 
         self.bt_receber.place(x=62, y=335,width=1328, height=50)
+
         self.bt_pesquisa_sku.place(x=281, y=83,width=60, height=40)
 
         #campo de texto
         self.txt_produto = Entry(self.root,
                                 font=('Poppins', 20), 
                                 textvariable=self.numSku)
+
         self.txt_produto.place(x=60, y=79,width=197,height=43)
 
         #label
