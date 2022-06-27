@@ -10,6 +10,7 @@ reportlab = "^3.6.10"
 tk-tools = "^0.16.0"
 tkcalendar = "^1.6.1"
 easygui = "^0.98.3"
+db-sqlite3 = "^0.0.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"

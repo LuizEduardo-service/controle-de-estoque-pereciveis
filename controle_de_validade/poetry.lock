@@ -1,4 +1,12 @@
 [[package]]
+name = "antiorm"
+version = "1.2.1"
+description = "A Pythonic Helper for DBAPI-2.0 SQL Access"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "appnope"
 version = "0.1.3"
 description = "Disable App Nap on macOS >= 10.9"
@@ -68,6 +76,28 @@ description = "Cross-platform colored terminal text."
 category = "dev"
 optional = false
 python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*, !=3.4.*"
+
+[[package]]
+name = "db"
+version = "0.1.1"
+description = "Databases for Humans"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+antiorm = "*"
+
+[[package]]
+name = "db-sqlite3"
+version = "0.0.1"
+description = "sqlite3 driver for db"
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.dependencies]
+db = "*"
 
 [[package]]
 name = "decorator"
@@ -425,9 +455,12 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "eed5888d6fd64e2d4071662ac549a0a1b33a59ebcb6acb2616811ca37fa8d29c"
+content-hash = "e655b62d5787f83d986513f668b0ccc6921cf1065498a5c149593665d31ac8cf"
 
 [metadata.files]
+antiorm = [
+    {file = "antiorm-1.2.1.tar.gz", hash = "sha256:96eb1841ce5163db4cf1dc13f4499ec2d7cffc190cf724b78ffdd3e6b7c4ff93"},
+]
 appnope = [
     {file = "appnope-0.1.3-py2.py3-none-any.whl", hash = "sha256:265a455292d0bd8a72453494fa24df5a11eb18373a60c7c0430889f22548605e"},
     {file = "appnope-0.1.3.tar.gz", hash = "sha256:02bd91c4de869fbb1e1c50aafc4098827a7a54ab2f39d9dcba6c9547ed920e24"},
@@ -455,6 +488,12 @@ backcall = [
 colorama = [
     {file = "colorama-0.4.5-py2.py3-none-any.whl", hash = "sha256:854bf444933e37f5824ae7bfc1e98d5bce2ebe4160d46b5edf346a89358e99da"},
     {file = "colorama-0.4.5.tar.gz", hash = "sha256:e6c6b4334fc50988a639d9b98aa429a0b57da6e17b9a44f0451f930b6967b7a4"},
+]
+db = [
+    {file = "db-0.1.1.tar.gz", hash = "sha256:980e772f15c1161d3b287ffec4f144e40961b0b3e6d5102809577870bf6c5808"},
+]
+db-sqlite3 = [
+    {file = "db-sqlite3-0.0.1.tar.gz", hash = "sha256:4dd410aa28a2c5b66de477f9dc62f523133217dd31c7ed7eb085214bea148db9"},
 ]
 decorator = [
     {file = "decorator-5.1.1-py3-none-any.whl", hash = "sha256:b8c3f85900b9dc423225913c5aace94729fe1fa9763b38939a95226f02d37186"},

@@ -1,14 +1,12 @@
-from cProfile import label
 import os
 from time import sleep
 from tkinter import *
-
-
-from tkinter import font
+from tkinter import ttk
 import easygui
 from tkcalendar import DateEntry
 from datetime import datetime
 from controle_de_validade.layout_pdf import Relatorios
+from controle_de_validade.dataBase import DataBase
 
 
 
@@ -22,9 +20,6 @@ class TelaPrincipal:
         self.data_recebimento = datetime.now().date()
         self.tela()
         self.root.mainloop()
-
-    def centralizar_tela(self):
-        pass
 
     def centralizacao_tela(self,largura, altura,root):
         param = []
@@ -113,18 +108,32 @@ class TelaPrincipal:
         # return format(data_final,'%d/%m/%Y')
         return data_final
 
+    def variaveis_tela_inicial(self):
+        self.numSku_v = self.numSku.get()
+        self.descri_produto_v = self.descri_produto.get()
+        self.categoria_v = self.categoria.get()
+        self.dta_fab_v = self.dta_fab.get_date()
+        self.dta_venc_v = self.dta_venc.get_date()
+        self.rec_minimo_v = self.rec_minimo.get()
+        self.alerta_comercial_v = self.alerta_comercial.get()
+        self.dta_recebimento_v = self.convert_data_str(self.data_recebimento)
+        self.hra_recebimento_v = datetime.now().hour()
+        self.usuario_v = self.l_usuario.get()
+        self.matricula_v = self.l_matricula.get()
+
     def gerar_pdf(self):
+            self.variaveis_tela_inicial()
             gerarPdf = Relatorios(
-                                    numSku = self.numSku.get(),
-                                    descri_produto = self.descri_produto.get(),
-                                    categoria = self.categoria.get(),
-                                    dta_fab = self.dta_fab.get_date(),
-                                    dta_venc = self.dta_venc.get_date(),
-                                    rec_minimo = self.rec_minimo.get(),
-                                    alerta_comercial = self.alerta_comercial.get(),
-                                    dta_recebimento = self.convert_data_str(self.data_recebimento),
-                                    usuario = self.l_usuario.get(),
-                                    matricula = self.l_matricula.get()
+                                    numSku = self.numSku_v,
+                                    descri_produto = self.descri_produto_v,
+                                    categoria = self.categoria_v,
+                                    dta_fab = self.dta_fab_v,
+                                    dta_venc = self.dta_venc_v,
+                                    rec_minimo = self.rec_minimo_v,
+                                    alerta_comercial = self.alerta_comercial_v,
+                                    dta_recebimento = self.data_recebimento_v,
+                                    usuario = self.l_usuario_v,
+                                    matricula = self.l_matricula_v
             )
             gerarPdf.gerar_relatorio()
             
@@ -307,6 +316,56 @@ class TelaPrincipal:
         self.lb_usuario.place(x=1177, y=64, width=251, height=37)
         self.lb_matricula.place(x=1179, y=99, width=251, height=37)
         self.lb_msg.place(x=345, y=80, width=554, height=43)
+
+        #tabela
+        colunas = [
+                    'id',
+                    # 'matricula',
+                    'usuario',
+                    'produto',
+                    'descricao',
+                    'data_min_rec',
+                    'alerta_comercial',
+                    'descri_status',
+                    'data_fabricacao',
+                    'data_vencimento'
+                    # 'data_recebimento',
+                    # 'hora_recebimento',
+                    # 'status_de_recebimento'
+
+        ]
+
+        self.tr_vw = ttk.Treeview(self.root,columns=colunas, show='headings')
+
+        self.tr_vw.column('id', minwidth=0, width=0)
+        # self.tr_vw.column('matricula', minwidth=0, width=50)
+        self.tr_vw.column('usuario', minwidth=0, width=25)
+        self.tr_vw.column('produto', minwidth=0, width=25)
+        self.tr_vw.column('descricao', minwidth=0, width=200)
+        self.tr_vw.column('data_min_rec', minwidth=0, width=50)
+        self.tr_vw.column('alerta_comercial', minwidth=0, width=50)
+        self.tr_vw.column('descri_status', minwidth=0, width=50)
+        self.tr_vw.column('data_fabricacao', minwidth=0, width=50)
+        self.tr_vw.column('data_vencimento', minwidth=0, width=50)
+        # self.tr_vw.column('data_recebimento', minwidth=0, width=50)
+        # self.tr_vw.column('hora_recebimento', minwidth=0, width=50)
+        # self.tr_vw.column('status_de_recebimento', minwidth=0, width=50)
+
+        self.tr_vw.heading('id',text= 'ID')
+        # self.tr_vw.heading('matricula',text= 'MATRICULA')
+        self.tr_vw.heading('usuario',text= 'USUARIO')
+        self.tr_vw.heading('produto',text= 'PRODUTO')
+        self.tr_vw.heading('descricao',text= 'DESCRIÇÃO')
+        self.tr_vw.heading('data_min_rec',text= 'DATA_MIN_REC')
+        self.tr_vw.heading('alerta_comercial',text= 'ALERTA_COMERCIAL')
+        self.tr_vw.heading('descri_status',text= 'DESCRI_STATUS')
+        self.tr_vw.heading('data_fabricacao',text= 'DATA_FABRICAÇÃO')
+        self.tr_vw.heading('data_vencimento',text= 'DATA_VENCIMENTO')
+        # self.tr_vw.heading('data_recebimento',text= 'DATA_RECEBIMENTO')
+        # self.tr_vw.heading('hora_recebimento',text= 'HORA RECEBIMENTO')
+        # self.tr_vw.heading('status_de_recebimento',text= 'STATUS RECEBIMENTO')
+
+        self.tr_vw.place(x=62, y=400, width=1328, height=323)
 
     def componentes_tela_config(self):
         self.destroi_widget()
@@ -494,9 +553,27 @@ class TelaPrincipal:
         self.root.geometry("%dx%d+%d+%d" % (p[0],p[1],p[2],p[3]))
 
         #tela inicial:
+        self.componentes_tela_inicial()
 
-        self.componentes_login_usuario()
 
+    def insere_registros_rec(self):
+        self.variaveis_tela_inicial()
+        lista_dados = []
+        dados = (
+                self.matricula_v,
+                self.usuario_v,
+                self.numSku_v,
+                self.descri_produto_v,
+                self.rec_minimo_v,
+                self.alerta_comercial_v,
+                self.dta_fab_v,
+                self.dta_venc_v,
+                self.dta_recebimento_v,
+                self.categoria_v,
+                self.hra_recebimento_v
+            )
+        lista_dados.append(dados)
+        sql = """INSERT INTO tb_dataBase VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?) """
 
 if __name__ =='__main__':
     TelaPrincipal()
