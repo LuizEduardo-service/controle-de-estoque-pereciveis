@@ -1,3 +1,4 @@
+from cProfile import label
 import os
 from time import sleep
 from tkinter import *
@@ -155,11 +156,13 @@ class TelaPrincipal:
             self.alerta_comercial.set('')
 
         status_rec_validado = self.btReceber.get()
+
         if status_rec == 'PRODUTO LIBERADO PARA RECEBIMENTO' and status_rec_validado == 'PRODUTO LIBERADO PARA RECEBIMENTO':
             self.gerar_pdf()
             # self.limpa_campos(1)
             self.btReceber.set('RECEBIMENTO FINALIZADO')
             self.txt_produto.focus
+
         elif status_rec == 'PRODUTO NÃO LIBERADO PARA RECEBIMENTO' and status_rec_validado == 'PRODUTO NÃO LIBERADO PARA RECEBIMENTO':
             pass
 
@@ -184,6 +187,7 @@ class TelaPrincipal:
         self.destroi_widget()
         self.imagem_tela = PhotoImage(file=r'..\image\tela1.png')
         self.imagem_pesquisa = PhotoImage(file=r'..\image\pesquisar.png',width=64,height=30)
+        self.componentes_menu_bar()
        
         lb_image = Label(self.root,image=self.imagem_tela)
         lb_image.place(x=0, y=0)
@@ -235,7 +239,8 @@ class TelaPrincipal:
                                 font=('Poppins', 20), 
                                 textvariable=self.numSku)
 
-        self.txt_produto.place(x=60, y=79, width=197, height=43)
+        self.txt_produto.place(x=60, y=79,width=197,height=43)
+        self.numSku.set('')
 
         #label
         self.dta_recebimento = StringVar()
@@ -304,9 +309,11 @@ class TelaPrincipal:
         self.lb_msg.place(x=345, y=80, width=554, height=43)
 
     def componentes_tela_config(self):
+        self.destroi_widget()
         self.image_config = PhotoImage(file=r'../image/config.png')
         self.lb_img_config = Label(self.root,image=self.image_config)
         self.lb_img_config.place(x=0, y=0)
+        self.componentes_menu_bar()
 
         # campos de entrada
         self.dir_bd = StringVar()
@@ -429,7 +436,19 @@ class TelaPrincipal:
         self.btn_salva_config.place(x=1250, y=690, width=140, height=30)
         self.btn_cancelar_config.place(x=1073, y=690, width=140, height=30)
 
+    def componentes_menu_bar(self):
+        self.menubar = Menu(self.root)
+        self.menu = Menu(self.menubar)
+
+        self.menubar.add_command(label='Inicio',command=self.componentes_tela_inicial)
+        self.menubar.add_command(label='Banco')
+        self.menubar.add_command(label='Configurações',command=self.componentes_tela_config)
+        self.menubar.add_command(label='Relatório')
+
+        self.root.config(menu=self.menubar)
+
     def componentes_login_usuario(self):
+        self.destroi_widget()
         self.image_login = PhotoImage(file=r'../image/telaLogin.png')
         self.lb_img_login = Label(self.root,image=self.image_login)
         self.lb_img_login.place(x=0, y=0)
@@ -475,6 +494,7 @@ class TelaPrincipal:
         self.root.geometry("%dx%d+%d+%d" % (p[0],p[1],p[2],p[3]))
 
         #tela inicial:
+
         self.componentes_login_usuario()
 
 
