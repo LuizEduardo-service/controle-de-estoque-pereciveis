@@ -2,6 +2,8 @@ import os
 from time import sleep
 from tkinter import *
 from tkinter import ttk
+import tkinter
+from tkinter import messagebox
 import easygui
 from tkcalendar import DateEntry
 from datetime import datetime
@@ -62,36 +64,27 @@ class TelaPrincipal:
             widget.destroy()
 
     def procura_produto(self, numProduto):
-        produtos = {
-            123:[
-                'Smart TV LED 32" HD Philco PTV32G70RCH Roku TV','TELEVISORES'
-            ],
-            456:[
-                'Smartphone Motorola Moto G22 Azul 128GB 4GB RAM Tela de 6.5','CELULAR'
-            ],
-            789:[
-                'Geladeira Consul Frost Free Duplex CRM43NB com Altura Flex','LINHA BRANCA'
-            ]
-        }
         try:
-            novo_produto = produtos[numProduto]
-        except KeyError:
-            novo_produto = []
+            bd = DataBase(2)
+            sql=f"""SELECT * FROM tb_produtos WHERE produto = '{str(numProduto)}'"""
+            lista_produtos = bd.selectAll(sql)
 
-        if novo_produto:
-            self.descri_produto.set(novo_produto[0])
-            self.categoria.set(novo_produto[1])
-            self.txt_produto.configure(bg='#ffffff')
-            self.msg.set('')
-            self.limpa_campos(2)
-        else:
-            self.msg.set('PRODUTO NÃO LOCALIZADO')
-            self.descri_produto.set('')
-            self.categoria.set('')
-            self.txt_produto.configure(bg='#FA8072')
-            self.limpa_campos(2)
-            self.numSku.set('')
-            self.txt_produto.focus
+            if lista_produtos:
+                self.descri_produto.set(lista_produtos[0][2])
+                self.categoria.set(lista_produtos[0][3])
+                self.txt_produto.configure(bg='#ffffff')
+                self.msg.set('')
+                self.limpa_campos(2)
+            else:
+                self.msg.set('PRODUTO NÃO LOCALIZADO')
+                self.descri_produto.set('')
+                self.categoria.set('')
+                self.txt_produto.configure(bg='#FA8072')
+                self.limpa_campos(2)
+                self.numSku.set('')
+                self.txt_produto.focus
+        except:
+            messagebox.showerror('Erro consulta', 'Não foi possivel conectar ao banco de  dados, por favor verifique a conexão.')
            
     def define_alerta_comercial(self,dta_venc, dta_fab, percent = 0.25):
         """ define a data do alerta comercial"""
@@ -117,9 +110,11 @@ class TelaPrincipal:
         self.rec_minimo_v = self.rec_minimo.get()
         self.alerta_comercial_v = self.alerta_comercial.get()
         self.dta_recebimento_v = self.convert_data_str(self.data_recebimento)
-        self.hra_recebimento_v = datetime.now().hour()
-        self.usuario_v = self.l_usuario.get()
-        self.matricula_v = self.l_matricula.get()
+        self.hra_recebimento_v = self.convert_data_str(datetime.now().date())
+        self.usuario_v = self.usuario
+        self.matricula_v = self.matricula
+        self.receber_v = self.btReceber.get()
+        
 
     def gerar_pdf(self):
             self.variaveis_tela_inicial()
@@ -138,6 +133,7 @@ class TelaPrincipal:
             gerarPdf.gerar_relatorio()
             
     def executa_calculos(self):
+        self.status_recebimento: str = ''
         data_fab = self.dta_fab.get_date()
         data_venc = self.dta_venc.get_date()
         r_minimo = self.define_minimo_recebimento(data_venc, data_fab)
@@ -150,6 +146,7 @@ class TelaPrincipal:
             self.bt_receber.configure(bg='#FA8072')
             self.rec_minimo.set('')
             self.alerta_comercial.set('')
+            
 
         elif  r_minimo >= datetime.now().date():
             self.btReceber.set('PRODUTO LIBERADO PARA RECEBIMENTO')
@@ -157,23 +154,53 @@ class TelaPrincipal:
             self.rec_minimo.set(self.convert_data_str(r_minimo))
             self.alerta_comercial.set(self.convert_data_str(a_comercial))
             # self.limpa_campos()
+            
 
         else:
             self.btReceber.set('PRODUTO NÃO LIBERADO PARA RECEBIMENTO')
             self.bt_receber.configure(bg='#FA8072')
-            self.rec_minimo.set('')
-            self.alerta_comercial.set('')
+            self.rec_minimo.set(self.convert_data_str(r_minimo))
+            self.alerta_comercial.set(self.convert_data_str(a_comercial))
+            # self.rec_minimo.set('')
+            # self.alerta_comercial.set('')
+            
 
         status_rec_validado = self.btReceber.get()
 
         if status_rec == 'PRODUTO LIBERADO PARA RECEBIMENTO' and status_rec_validado == 'PRODUTO LIBERADO PARA RECEBIMENTO':
-            self.gerar_pdf()
-            # self.limpa_campos(1)
+            # self.gerar_pdf()
+            self.status_recebimento = 'RECEBIDO'
+            self.insere_registros_rec()
+            self.select_dados_rec()
+            self.txt_produto.focus()
+            self.limpa_campos(1)
             self.btReceber.set('RECEBIMENTO FINALIZADO')
-            self.txt_produto.focus
+            self.configura_btn_receber()
 
         elif status_rec == 'PRODUTO NÃO LIBERADO PARA RECEBIMENTO' and status_rec_validado == 'PRODUTO NÃO LIBERADO PARA RECEBIMENTO':
+            opc = messagebox.askyesnocancel("Recebimento de Mercadoria", 
+                                            'Mercadoria não esta nos parametros de recebimento.\nContinuar recebimento?')
+            if opc:
+                messagebox.showinfo('Recebimento','Produto recebido!')
+                self.status_recebimento = 'RECEBIDO'
+                self.insere_registros_rec()
+                self.select_dados_rec()
+                self.txt_produto.focus()
+                self.limpa_campos(1)
+                self.btReceber.set('RECEBIMENTO FINALIZADO')
+                self.configura_btn_receber()
+
+            elif opc is None:
+                pass
+            else:
+                messagebox.showerror('Recebimento','Produto não recebido!')
+                self.limpa_campos(1)
+                self.txt_produto.focus()
+                self.status_recebimento = ' NÃO RECEBIDO'
+                self.configura_btn_receber()
+        else:
             pass
+
 
     def define_diretorio(self, tipo: str) -> str:
             diretorio = easygui.diropenbox()
@@ -191,6 +218,9 @@ class TelaPrincipal:
         p = self.centralizacao_tela(1440,750,self.root)
         self.root.geometry("%dx%d+%d+%d" % (p[0],p[1],p[2],p[3]))
         self.imagem_tela = PhotoImage(file=r'..\image\tela1.png')
+
+    def configura_btn_receber(self):
+        self.bt_receber.configure(bg='#676AA9', fg='#ffffff')
 
     def componentes_tela_inicial(self):
         self.destroi_widget()
@@ -224,6 +254,8 @@ class TelaPrincipal:
                             text='Aguardando analise...',
                             textvariable=self.btReceber,
                             cursor='hand2',
+                            bg='#676AA9',
+                            fg='#ffffff',
                             font=('Poppins', 20),
                             command=lambda:self.executa_calculos())
 
@@ -367,6 +399,8 @@ class TelaPrincipal:
 
         self.tr_vw.place(x=62, y=400, width=1328, height=323)
 
+        self.select_dados_rec()
+
     def componentes_tela_config(self):
         self.destroi_widget()
         self.image_config = PhotoImage(file=r'../image/config.png')
@@ -376,8 +410,8 @@ class TelaPrincipal:
 
         # campos de entrada
         self.dir_bd = StringVar()
-        self.dir_pdf = StringVar()
-        self.dir_relatorio = StringVar()
+        # self.dir_pdf = StringVar()
+        # self.dir_relatorio = StringVar()
         self.nome_pdf =StringVar()
         self.nome_relatorio = StringVar()
 
@@ -386,16 +420,6 @@ class TelaPrincipal:
         self.txt_dir_bd = Entry(self.root,
                             font=FONT_INIT,
                             textvariable=self.dir_bd,
-                            )
-
-        self.txt_dir_pdf = Entry(self.root,
-                            font=FONT_INIT,
-                            textvariable=self.dir_pdf,
-                            )
-
-        self.txt_dir_relatorio = Entry(self.root,
-                            font=FONT_INIT,
-                            textvariable=self.dir_relatorio,
                             )
 
         self.txt_nome_pdf = Entry(self.root,
@@ -409,16 +433,13 @@ class TelaPrincipal:
                             )
 
         self.txt_dir_bd.place(x=70, y=186, width=826, height=30)
-        self.txt_dir_pdf.place(x=70, y=265, width=826, height=30)
-        self.txt_dir_relatorio.place(x=70, y=344, width=826, height=30)
-        self.txt_nome_pdf.place(x=1012, y=265, width=252, height=30)
-        self.txt_nome_relatorio.place(x=1012, y=346, width=252, height=30)
+        self.txt_nome_pdf.place(x=70, y=265, width=826, height=30)
+        self.txt_nome_relatorio.place(x=70, y=344, width=826, height=30)
+
 
 
         #botoes de localiza pasta
         self.bd =StringVar()
-        self.pdf =StringVar()
-        self.rel =StringVar()
         self.btn_dir_bd = Button(self.root,
                                 text='...',
                                 font=FONT_INIT,
@@ -426,39 +447,25 @@ class TelaPrincipal:
                                 command=lambda:self.define_diretorio('bd'),
                                 )
 
-        self.btn_dir_pdf = Button(self.root,
-                                text='...',
-                                font=FONT_INIT,
-                                justify='center',
-                                command=lambda:self.define_diretorio('pdf'),
-                                )
-
-        self.btn_dir_relatorio = Button(self.root,
-                                        text='...',
-                                        font=FONT_INIT,
-                                        justify='center',
-                                        command=lambda:self.define_diretorio('rel'),
-                                        )
 
         self.btn_dir_bd.place(x=915, y=186, width=55, height=30)
-        self.btn_dir_pdf.place(x=915, y=265, width=55, height=30)
-        self.btn_dir_relatorio.place(x=915, y=344, width=55, height=30)
+
 
         #escala de valores
         self.scl_rec_minimo = IntVar()
         self.scl_alert_comercial = IntVar()
 
         self.sc_rec_minimo = Scale(self.root, 
-                                    from_=0, to=100,
+                                    from_=5, to=100,
                                     variable=self.scl_rec_minimo, 
                                     orient='horizontal',
-                                    tickinterval=5)
+                                    resolution=5)
 
         self.sc_alert_comercial = Scale(self.root, 
-                                        from_=0, to=100,
+                                        from_=5, to=100,
                                         variable=self.scl_alert_comercial, 
                                         orient='horizontal',
-                                        tickinterval=5)
+                                        resolution=5)
         
         self.ajd_rec_minimo = Label(self.root,
                                     text='?',
@@ -481,7 +488,7 @@ class TelaPrincipal:
                         text='SALVAR',
                         font=FONT_INIT,
                         justify='center',
-                        command=lambda:self.componentes_tela_inicial()
+                        command=lambda:self.atualiza_dados_config()
                         )
 
         self.btn_cancelar_config = Button(self.root,
@@ -494,6 +501,7 @@ class TelaPrincipal:
 
         self.btn_salva_config.place(x=1250, y=690, width=140, height=30)
         self.btn_cancelar_config.place(x=1073, y=690, width=140, height=30)
+        self.carrega_dados_confg()
 
     def componentes_menu_bar(self):
         self.menubar = Menu(self.root)
@@ -546,7 +554,7 @@ class TelaPrincipal:
         self.btn_entrar.place(x=983, y=590, width=230, height=40)
 
     def tela(self):
-        self.usuario='Luiz Eduardo'
+        self.usuario ='Luiz Eduardo'
         self.matricula = '3896595'
         self.root.title('Controle de Validade')
         p = self.centralizacao_tela(1440,750,self.root)
@@ -559,21 +567,88 @@ class TelaPrincipal:
     def insere_registros_rec(self):
         self.variaveis_tela_inicial()
         lista_dados = []
+
         dados = (
+                None,
                 self.matricula_v,
                 self.usuario_v,
                 self.numSku_v,
                 self.descri_produto_v,
                 self.rec_minimo_v,
                 self.alerta_comercial_v,
+                self.receber_v,
                 self.dta_fab_v,
                 self.dta_venc_v,
                 self.dta_recebimento_v,
-                self.categoria_v,
-                self.hra_recebimento_v
+                self.hra_recebimento_v,
+                self.status_recebimento
             )
+
         lista_dados.append(dados)
         sql = """INSERT INTO tb_dataBase VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?) """
+        bd = DataBase(2)
+        bd.insert(sql, lista_dados)
 
-if __name__ =='__main__':
+    def select_dados_rec(self):
+        self.tr_vw.delete(*self.tr_vw.get_children())
+        bd = DataBase(2)
+        sql =""" SELECT 
+                    id,
+                    conferente,
+                    produto,
+                    descricao,
+                    data_min_rec,
+                    alerta_comercial,
+                    descri_status,
+                    data_fabricacao,
+                    data_vencimento
+                FROM tb_dataBase ORDER BY id DESC """
+
+        dados_rec = bd.selectAll(sql)
+        for dados in dados_rec:
+            self.tr_vw.insert('','end',values=dados)
+
+    #========configurações============
+    def carrega_dados_confg(self):
+        try:
+            bd = DataBase(1)
+            sql = """SELECT * FROM tb_config WHERE id = 1"""
+            config1 = bd.selectAll(sql)
+
+            self.nome_relatorio.set(config1[0][3])
+            self.nome_pdf.set(config1[0][2])
+            self.dir_bd.set(config1[0][1])
+
+        except:
+            messagebox.showerror('Erro Banco', 'Não foi possivel carregar os dados...\nVerifique e tente novamente.')
+        try:
+            bd = DataBase(2)
+            sql = """SELECT * FROM tb_periodo_rec WHERE id = 1"""
+            config2 = bd.selectAll(sql)
+
+            self.scl_alert_comercial.set(config2[0][2])
+            self.scl_rec_minimo.set(config2[0][1])
+
+        except:
+            messagebox.showerror('Erro Banco', 'Não foi possivel carregar os dados...\nVerifique e tente novamente.')
+
+    def atualiza_dados_config(self):
+
+            nome_relatorio = self.nome_relatorio.get()
+            nome_pdf = self.nome_pdf.get()
+            dir_bd = self.dir_bd.get()    
+            scl_alert_comercial = self.scl_alert_comercial.get()
+            scl_rec_minimo = self.scl_rec_minimo.get()
+            sql = """UPDATE tb_config SET dir_bd = '{}', nome_pdf = '{}', nome_rel = '{}' WHERE id = 1""".format(dir_bd, nome_pdf, nome_relatorio)
+            bd = DataBase(1)
+            bd.update(sql)
+
+            if scl_rec_minimo>= scl_alert_comercial:
+                messagebox.showwarning('Erro de Periodo','Recebimento minimo maior que alerta Comercial.')
+            else:
+                sql2 = """UPDATE tb_periodo_rec SET r_minimo = {}, a_comercial = {} WHERE id = 1""".format(scl_rec_minimo, scl_alert_comercial)
+                bd = DataBase(2)
+                bd.update(sql2)
+
+if __name__ == '__main__':
     TelaPrincipal()

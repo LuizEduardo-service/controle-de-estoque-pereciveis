@@ -27,8 +27,8 @@ class DataBase:
         self.conn.commit()
         self.conn.close()
 
-    def update(self, stringSQL, data: list = []):
-        self.cursor.executemany(stringSQL, data)
+    def update(self, stringSQL):
+        self.cursor.execute(stringSQL)
         self.conn.commit()
         self.conn.close()
 
@@ -40,16 +40,21 @@ class DataBase:
     def selectAll(self,stringSQL)-> list:
         self.cursor.execute(stringSQL)
         data = self.cursor.fetchall()
+        self.conn.close()
         return data
 
 
     def cria_tabelas(self):
-        self.cursor.execute(""" CREATE TABLE IF NOT EXISTS tb_config(
-                             dir_bd VARCHAR(100),
-                             dir_pdf VARCHAR(100),
-                             nome_pdf VARCHAR(50),
-                             dir_rel VARCHAR(100),
-                             nome_rel VARCHAR(50),
+        # self.cursor.execute(""" CREATE TABLE IF NOT EXISTS tb_config(
+        #                      id INTEGER PRIMARY KEY AUTOINCREMENT,
+        #                      dir_bd VARCHAR(250),
+        #                      nome_pdf VARCHAR(50),
+        #                      nome_rel VARCHAR(50)                          
+
+        #                     )""")
+
+        self.cursor.execute(""" CREATE TABLE IF NOT EXISTS tb_periodo_rec(
+                             id INTEGER PRIMARY KEY AUTOINCREMENT,
                              r_minimo INTEGER,
                              a_comercial INTEGER                               
 
@@ -108,6 +113,7 @@ class DataBase:
 
 
         self.conn.commit()
+        self.conn.close()
 
 
    
