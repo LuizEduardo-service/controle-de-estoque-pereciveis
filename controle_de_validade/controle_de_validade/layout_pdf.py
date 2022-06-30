@@ -1,9 +1,5 @@
 import datetime as dt
 from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter,A4
-from reportlab.pdfbase import pdfmetrics
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.platypus import SimpleDocTemplate, Image
 from reportlab.lib import colors
 import webbrowser
 import locale
@@ -18,38 +14,25 @@ class Relatorios:
         self.numSku = kwargs.get('numSku')
         self.descri_produto = kwargs.get('descri_produto')
         self.categoria = kwargs.get('categoria')
-        self.dta_fab = kwargs.get('dta_fab')
-        self.dta_venc = kwargs.get('dta_venc')
-        self.rec_minimo = kwargs.get('rec_minimo')
-        self.alerta_comercial = kwargs.get('alerta_comercial')
-        self.dta_recebimento = kwargs.get('dta_recebimento')
+        self.dta_fab = dt.datetime.strptime(kwargs.get('dta_fab'),'%Y-%m-%d')
+        self.dta_venc = dt.datetime.strptime(kwargs.get('dta_venc'),'%Y-%m-%d')
+        self.rec_minimo = dt.datetime.strptime(kwargs.get('rec_minimo'),'%Y-%m-%d')
+        self.alerta_comercial = dt.datetime.strptime(kwargs.get('alerta_comercial'),'%Y-%m-%d')
+        self.dta_recebimento = dt.datetime.strptime(kwargs.get('dta_recebimento'),'%Y-%m-%d')
         self.usuario = kwargs.get('usuario')
         self.matricula = kwargs.get('matricula')
         self.nome_arquivo = kwargs.get('nome_arquivo')
+        # self.nome_arquivo = 'validade.pdf'
+        
 
-        self.lmt_exp = kwargs.get('lmt_exp')
-        self.recebimento = kwargs.get('recebimento')
-        self.min_recebimento = kwargs.get('min_recebimento')
-        self.validade = kwargs.get('validade')
-        self.sku = kwargs.get('sku')
-        self.descricao = kwargs.get('descricao')
-        self.ano = 2022
 
     def mostra_cliente(self):
-        webbrowser.open(self.nome_arquivo)
+        webbrowser.open(self.nome_arquivo + '.pdf')
 
     def gerar_relatorio(self):
-        self.nome_arquivo = 'validade.pdf'
-        self.lmt_exp = '10/10/2022'
-        self.recebimento = '22/06/2022'
-        self.min_recebimento = '25/05/2022'
-        self.validade = '18/10/2023'
-        self.sku = 123456
-        self.mes = 'JUNHO'
-        self.ano = 2022
         FONT_PRINCIPAL = 'Helvetica-Bold'
 
-        self.c = canvas.Canvas(self.nome_arquivo)
+        self.c = canvas.Canvas(self.nome_arquivo + '.pdf')
 
 
         #faixa limite de expedição
@@ -57,22 +40,27 @@ class Relatorios:
         self.c.setLineWidth(120)
         self.c.line(30,730,550,730)
 
+        alerta_comercial = dt.datetime.strftime(self.alerta_comercial,'%d/%m/%Y')
         self.c.setFont(FONT_PRINCIPAL, 30)
         self.c.setFillColor(colors.white)
         self.c.drawCentredString(x=300, y=750,text='LIMITE EXPEDIÇÃO')
         self.c.setFont(FONT_PRINCIPAL, 40)
-        self.c.drawCentredString(x=300, y=700,text=self.alerta_comercial)
+        self.c.drawCentredString(x=300, y=700,text=alerta_comercial)
 
         #faixa data de vencimento
         self.c.setStrokeColor(colors.black)
         self.c.setLineWidth(120)
         self.c.line(30,620,550,620)
+        
 
+        data_venc = dt.datetime.strftime(self.dta_venc,'%d/%m/%Y')
         self.c.setFont(FONT_PRINCIPAL, 30)
         self.c.setFillColor(colors.white)
         self.c.drawCentredString(x=300, y=640,text='DATA VENCIMENTO')
         self.c.setFont(FONT_PRINCIPAL, 40)
-        self.c.drawCentredString(x=300, y=590,text=format(self.dta_venc,'%d/%m/%Y'))
+        self.c.drawCentredString(x=300, y=590,text=data_venc)
+        # self.c.drawCentredString(x=300, y=590,text=format(self.dta_venc,'%d/%m/%Y'))
+
 
         #faixa sku
         self.c.setFont(FONT_PRINCIPAL, 40)
@@ -96,9 +84,10 @@ class Relatorios:
         self.c.setLineWidth(40)
         self.c.line(40,400,550,400)
 
+        dta_recebimento = dt.datetime.strftime(self.dta_recebimento,'%d/%m/%Y')
         self.c.setFont(FONT_PRINCIPAL, 20)
         self.c.setFillColor(colors.black)
-        self.c.drawCentredString(x=300, y=393, text= self.dta_recebimento)
+        self.c.drawCentredString(x=300, y=393, text= dta_recebimento)
 
         #faixa de fabricação
         self.c.setFont(FONT_PRINCIPAL, 20)
@@ -109,11 +98,13 @@ class Relatorios:
         self.c.setLineWidth(40)
         self.c.line(40,300,550,300)
 
+        dta_fab = dt.datetime.strftime(self.dta_fab,'%d/%m/%Y')
         self.c.setFont(FONT_PRINCIPAL, 20)
         self.c.setFillColor(colors.black)
-        self.c.drawCentredString(x=300, y=293, text= format(self.dta_fab,'%d/%m/%Y'))
+        self.c.drawCentredString(x=300, y=293, text= dta_fab)
+        # self.c.drawCentredString(x=300, y=293, text= format(self.dta_fab,'%d/%m/%Y'))
 
-        #faixa de recebimento minimo
+
         mes = dt.datetime.strftime(self.dta_venc,'%B')
         ano = dt.datetime.strftime(self.dta_venc,'%Y')
 
@@ -125,9 +116,10 @@ class Relatorios:
         self.c.setLineWidth(40)
         self.c.line(40,200,550,200)
 
+        rec_minimo = dt.datetime.strftime(self.rec_minimo,'%d/%m/%Y')
         self.c.setFont(FONT_PRINCIPAL, 20)
         self.c.setFillColor(colors.black)
-        self.c.drawCentredString(x=300, y=193, text= self.rec_minimo)
+        self.c.drawCentredString(x=300, y=193, text= rec_minimo)
 
         #faixa de mes e ano
         self.c.setFont(FONT_PRINCIPAL,25)
