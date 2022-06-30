@@ -3,6 +3,7 @@ from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
 from tkinter.filedialog import askdirectory
+from tkinter.tix import ComboBox
 import easygui
 from numpy import datetime64
 from tkcalendar import DateEntry
@@ -16,6 +17,7 @@ import time
 
 root = Tk()
 FONT_INIT =('Poppins', 15)
+FONT_INIT_TXT_AREA =('Poppins', 10)
 
 class TelaPrincipal:
 
@@ -696,6 +698,44 @@ class TelaPrincipal:
         self.estilo_treeview = ttk.Style()
         self.estilo_treeview.theme_use('clam')
 
+    def inserir_produto_massivo(self):
+
+        dados = self.txtArea_produtos.get("1.0","end - 1c")
+        lista_final: list = []
+        erros: str = ''
+        lista_dados = dados.split(',')
+        # import ipdb; ipdb.set_trace()
+        if lista_dados:
+            for registro in lista_dados:
+                if registro != '':
+
+                    if '\n' in registro:
+                        registro = registro.strip('\n')
+                    try:
+                        produto, descri, careg = registro.split(';')
+                        dados = (None, produto, descri, careg)
+
+                        lista_final.append(dados)
+                        dados = ()
+                    except ValueError as error:
+                        print('Existem erro nos dados... Verifique e tente novamente')
+                        erros += registro
+                        dados = ()
+
+            self.insert_produto(lista_final)
+            if erros:
+                self.txtArea_produtos.delete(1.0,END)
+                self.txtArea_produtos.insert(1.0, erros)
+
+                    
+    def insert_produto(self, listaDados: list):
+        try:
+            bd = DataBase(2)
+            sql = f'INSERT INTO tb_produtos VALUES (?, ?, ?, ?)'
+            bd.insert(sql, listaDados)
+            messagebox.showinfo('Inserção','Dados inseridos com sucesso')
+        except:
+            messagebox.showerror('Inserção','Não foi possivel inserir os dados, verifique e tente novamente.')
 
     def tela(self):
         self.usuario ='Luiz Eduardo'
@@ -705,9 +745,79 @@ class TelaPrincipal:
         self.root.geometry("%dx%d+%d+%d" % (p[0],p[1],p[2],p[3]))
 
         #tela inicial:
-        self.componentes_historico()
+        self.imagem_produtos = PhotoImage(file=r'..\image\produtos.png')
+
+        self.componentes_menu_bar()
+        lb_image = Label(self.root,image=self.imagem_produtos)
+        lb_image.place(x=0, y=0)
+
+        self.txt_cd_produto = Entry(self.root,
+                                    font=FONT_INIT,
+                                    
+        )
+
+        self.txt_cd_descri_produto = Entry(self.root,
+                                    font=FONT_INIT,
+                                    
+        )
+
+        self.cbx_cd_categoria_produto = ttk.Combobox(self.root,
+                                                     font= FONT_INIT,
+                                                     values=[]
+                                                            
+        )
+
+        self.cbx_cd_filtro = ttk.Combobox(self.root,
+                                         font= FONT_INIT,
+                                         values=['PRODUTO','DESCRIÇÃO','CATEGORIA']
+                                                           
+        )
+
+        self.txt_campo_pesquisa = Entry(self.root,
+                                    font=FONT_INIT,
+                                    
+        )
+
+        self.txtArea_produtos = Text(self.root, font=FONT_INIT_TXT_AREA, wrap='word')
 
 
+        self.txt_cd_produto.place(x=62, y=146, width=197, height=43)
+        self.txt_cd_descri_produto.place(x=62, y=231, width=632, height=43)
+        self.cbx_cd_categoria_produto.place(x=62, y=315, width=290, height=43)
+        self.txt_campo_pesquisa.place(x=777, y=225, width=500, height=43)
+        self.cbx_cd_filtro.place(x=777, y=140, width=253, height=43)
+        self.txtArea_produtos.place(x=62, y=421, width=632, height=211)
+
+        self.btn_inserir = Button(self.root,
+                                 text='INSERIR', 
+                                 font=FONT_INIT, 
+                                 bg='#676AA9', 
+                                 justify='center',
+                                 cursor='hand2',
+                                 command=lambda:self.inserir_produto_massivo()
+
+                                  )
+
+        self.btn_update = Button(self.root,
+                                 text='ATUALIZAR', 
+                                 font=FONT_INIT, 
+                                 bg='#676AA9', 
+                                 justify='center',
+                                  cursor='hand2'
+                                  )
+
+        self.btn_delete = Button(self.root,
+                                 text='DELETAR', 
+                                 font=FONT_INIT, 
+                                 bg='#676AA9', 
+                                 justify='center',
+                                  cursor='hand2'
+                                  )
+
+
+        self.btn_inserir.place(x=75, y=665, width=169, height=51)
+        self.btn_update.place(x=279, y=665, width=169, height=51)
+        self.btn_delete.place(x=483, y=665, width=169, height=51)
 
 
     def insere_registros_rec(self):
@@ -901,7 +1011,7 @@ class TelaPrincipal:
             messagebox.showinfo('Arquivo','Arquivo Gerado com Sucesso.')
 
 
-        # import ipdb; ipdb.set_trace()
+
     
 
 
