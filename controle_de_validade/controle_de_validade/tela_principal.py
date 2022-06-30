@@ -1,14 +1,16 @@
-import os
 from time import sleep
 from tkinter import *
 from tkinter import ttk
-import tkinter
 from tkinter import messagebox
+from tkinter.filedialog import askdirectory
 import easygui
+from numpy import datetime64
 from tkcalendar import DateEntry
-from datetime import datetime
+from datetime import date, datetime
 from controle_de_validade.layout_pdf import Relatorios
 from controle_de_validade.dataBase import DataBase
+import pandas as pd
+import time
 
 
 
@@ -18,6 +20,11 @@ FONT_INIT =('Poppins', 15)
 class TelaPrincipal:
 
     def __init__(self) -> None:
+        self.nome_saida_pdf =''
+        self.nome_rel =''
+        self.diretorio_bd = ''
+        self.valor_rec_minimo = 0
+        self.valor_ale_comercial = 0
         self.root = root
         self.data_recebimento = datetime.now().date()
         self.tela()
@@ -86,18 +93,16 @@ class TelaPrincipal:
         except:
             messagebox.showerror('Erro consulta', 'Não foi possivel conectar ao banco de  dados, por favor verifique a conexão.')
            
-    def define_alerta_comercial(self,dta_venc, dta_fab, percent = 0.25):
+    def define_alerta_comercial(self,dta_venc, dta_fab, percent):
         """ define a data do alerta comercial"""
-
-        data_final = dta_venc - ((dta_venc - dta_fab) * percent)
+        data_final = dta_venc - ((dta_venc - dta_fab) * (percent/100))
 
         # return format(data_final,'%d/%m/%Y')
         return data_final
 
-    def define_minimo_recebimento(self,dta_venc, dta_fab, percent = 0.75):
+    def define_minimo_recebimento(self,dta_venc, dta_fab, percent):
         """Define a data minima para recebimento do produto"""
-
-        data_final = dta_venc - ((dta_venc - dta_fab) * percent)
+        data_final = dta_venc - ((dta_venc - dta_fab) * (percent/100))
         # return format(data_final,'%d/%m/%Y')
         return data_final
 
@@ -107,14 +112,20 @@ class TelaPrincipal:
         self.categoria_v = self.categoria.get()
         self.dta_fab_v = self.dta_fab.get_date()
         self.dta_venc_v = self.dta_venc.get_date()
-        self.rec_minimo_v = self.rec_minimo.get()
-        self.alerta_comercial_v = self.alerta_comercial.get()
-        self.dta_recebimento_v = self.convert_data_str(self.data_recebimento)
-        self.hra_recebimento_v = self.convert_data_str(datetime.now().date())
+        self.rec_minimo_v = self.r_minimo
+        self.alerta_comercial_v = self.a_comercial
+        self.dta_recebimento_v = self.data_recebimento
+        self.hra_recebimento_v = time.strftime('%H:%M')
         self.usuario_v = self.usuario
         self.matricula_v = self.matricula
         self.receber_v = self.btReceber.get()
-        
+
+    def relogio(self):
+        hora = time.strftime('%H')
+        min = time.strftime('%M')
+        seg = time.strftime('%S')
+        self.relogio_h.config(text=hora + ':' + min + ':' + seg)
+        self.relogio_h.after(1000,self.relogio)
 
     def gerar_pdf(self):
             self.variaveis_tela_inicial()
@@ -128,39 +139,41 @@ class TelaPrincipal:
                                     alerta_comercial = self.alerta_comercial_v,
                                     dta_recebimento = self.data_recebimento_v,
                                     usuario = self.l_usuario_v,
-                                    matricula = self.l_matricula_v
+                                    matricula = self.l_matricula_v,
+                                    nome_arquivo = self.nome_saida_pdf
+
             )
             gerarPdf.gerar_relatorio()
             
     def executa_calculos(self):
         self.status_recebimento: str = ''
-        data_fab = self.dta_fab.get_date()
-        data_venc = self.dta_venc.get_date()
-        r_minimo = self.define_minimo_recebimento(data_venc, data_fab)
-        a_comercial = self.define_alerta_comercial(data_venc, data_fab)
+        self.data_fab = self.dta_fab.get_date()
+        self.data_venc = self.dta_venc.get_date()
+        self.r_minimo = self.define_minimo_recebimento(self.data_venc, self.data_fab, self.valor_rec_minimo)
+        self.a_comercial = self.define_alerta_comercial(self.data_venc, self.data_fab, self.valor_ale_comercial)
         status_rec = self.btReceber.get()
 
 
-        if data_fab >= data_venc:
+        if self.data_fab >= self.data_venc:
             self.btReceber.set('DATA DE FABRICAÇÃO MAIOR OU IGUAL AO VENCIMENTO')
             self.bt_receber.configure(bg='#FA8072')
             self.rec_minimo.set('')
             self.alerta_comercial.set('')
             
 
-        elif  r_minimo >= datetime.now().date():
+        elif  self.r_minimo >= datetime.now().date():
             self.btReceber.set('PRODUTO LIBERADO PARA RECEBIMENTO')
             self.bt_receber.configure(bg='#3CB371')
-            self.rec_minimo.set(self.convert_data_str(r_minimo))
-            self.alerta_comercial.set(self.convert_data_str(a_comercial))
+            self.rec_minimo.set(self.convert_data_str(self.r_minimo))
+            self.alerta_comercial.set(self.convert_data_str(self.a_comercial))
             # self.limpa_campos()
             
 
         else:
             self.btReceber.set('PRODUTO NÃO LIBERADO PARA RECEBIMENTO')
             self.bt_receber.configure(bg='#FA8072')
-            self.rec_minimo.set(self.convert_data_str(r_minimo))
-            self.alerta_comercial.set(self.convert_data_str(a_comercial))
+            self.rec_minimo.set(self.convert_data_str(self.r_minimo))
+            self.alerta_comercial.set(self.convert_data_str(self.a_comercial))
             # self.rec_minimo.set('')
             # self.alerta_comercial.set('')
             
@@ -168,9 +181,9 @@ class TelaPrincipal:
         status_rec_validado = self.btReceber.get()
 
         if status_rec == 'PRODUTO LIBERADO PARA RECEBIMENTO' and status_rec_validado == 'PRODUTO LIBERADO PARA RECEBIMENTO':
-            # self.gerar_pdf()
             self.status_recebimento = 'RECEBIDO'
             self.insere_registros_rec()
+            self.gerar_pdf()
             self.select_dados_rec()
             self.txt_produto.focus()
             self.limpa_campos(1)
@@ -224,12 +237,19 @@ class TelaPrincipal:
 
     def componentes_tela_inicial(self):
         self.destroi_widget()
+        self.carrega_dados_config()
         self.imagem_tela = PhotoImage(file=r'..\image\tela1.png')
         self.imagem_pesquisa = PhotoImage(file=r'..\image\pesquisar.png',width=64,height=30)
         self.componentes_menu_bar()
        
         lb_image = Label(self.root,image=self.imagem_tela)
         lb_image.place(x=0, y=0)
+
+        # relogio
+        self.relogio_h = Label(self.root, font=FONT_INIT)
+        self.relogio_h.place(x=683, y=92, width=169, height=43)
+        self.relogio()
+
        #label data
         self.dta_fab = DateEntry(self.root,
                             selectmode='day',
@@ -352,7 +372,6 @@ class TelaPrincipal:
         #tabela
         colunas = [
                     'id',
-                    # 'matricula',
                     'usuario',
                     'produto',
                     'descricao',
@@ -361,16 +380,13 @@ class TelaPrincipal:
                     'descri_status',
                     'data_fabricacao',
                     'data_vencimento'
-                    # 'data_recebimento',
-                    # 'hora_recebimento',
-                    # 'status_de_recebimento'
 
         ]
-
-        self.tr_vw = ttk.Treeview(self.root,columns=colunas, show='headings')
+        self.tr_scroll_inicial = Scrollbar(self.root)
+        self.tr_vw = ttk.Treeview(self.root,columns=colunas, show='headings',yscrollcommand=self.tr_scroll_inicial.set)
+        self.tr_scroll_inicial.config(command=self.tr_vw.yview)
 
         self.tr_vw.column('id', minwidth=0, width=0)
-        # self.tr_vw.column('matricula', minwidth=0, width=50)
         self.tr_vw.column('usuario', minwidth=0, width=25)
         self.tr_vw.column('produto', minwidth=0, width=25)
         self.tr_vw.column('descricao', minwidth=0, width=200)
@@ -379,12 +395,9 @@ class TelaPrincipal:
         self.tr_vw.column('descri_status', minwidth=0, width=50)
         self.tr_vw.column('data_fabricacao', minwidth=0, width=50)
         self.tr_vw.column('data_vencimento', minwidth=0, width=50)
-        # self.tr_vw.column('data_recebimento', minwidth=0, width=50)
-        # self.tr_vw.column('hora_recebimento', minwidth=0, width=50)
-        # self.tr_vw.column('status_de_recebimento', minwidth=0, width=50)
+
 
         self.tr_vw.heading('id',text= 'ID')
-        # self.tr_vw.heading('matricula',text= 'MATRICULA')
         self.tr_vw.heading('usuario',text= 'USUARIO')
         self.tr_vw.heading('produto',text= 'PRODUTO')
         self.tr_vw.heading('descricao',text= 'DESCRIÇÃO')
@@ -393,11 +406,10 @@ class TelaPrincipal:
         self.tr_vw.heading('descri_status',text= 'DESCRI_STATUS')
         self.tr_vw.heading('data_fabricacao',text= 'DATA_FABRICAÇÃO')
         self.tr_vw.heading('data_vencimento',text= 'DATA_VENCIMENTO')
-        # self.tr_vw.heading('data_recebimento',text= 'DATA_RECEBIMENTO')
-        # self.tr_vw.heading('hora_recebimento',text= 'HORA RECEBIMENTO')
-        # self.tr_vw.heading('status_de_recebimento',text= 'STATUS RECEBIMENTO')
 
-        self.tr_vw.place(x=62, y=400, width=1328, height=323)
+
+        self.tr_vw.place(x=62, y=400, width=1299, height=323)
+        self.tr_scroll_inicial.place(x=1361, y=400, width=25, height=323)
 
         self.select_dados_rec()
 
@@ -501,7 +513,16 @@ class TelaPrincipal:
 
         self.btn_salva_config.place(x=1250, y=690, width=140, height=30)
         self.btn_cancelar_config.place(x=1073, y=690, width=140, height=30)
-        self.carrega_dados_confg()
+
+        self.carrega_dados_config()
+
+        self.scl_alert_comercial.set(self.valor_ale_comercial)
+        self.scl_rec_minimo.set(self.valor_rec_minimo)
+
+
+        self.nome_relatorio.set(self.nome_rel)
+        self.nome_pdf.set(self.nome_saida_pdf)
+        self.dir_bd.set(self.diretorio_bd)
 
     def componentes_menu_bar(self):
         self.menubar = Menu(self.root)
@@ -510,7 +531,7 @@ class TelaPrincipal:
         self.menubar.add_command(label='Inicio',command=self.componentes_tela_inicial)
         self.menubar.add_command(label='Banco')
         self.menubar.add_command(label='Configurações',command=self.componentes_tela_config)
-        self.menubar.add_command(label='Relatório')
+        self.menubar.add_command(label='Relatório',command=self.componentes_historico)
 
         self.root.config(menu=self.menubar)
 
@@ -552,6 +573,129 @@ class TelaPrincipal:
                                  command=lambda:self.componentes_tela_inicial())
         
         self.btn_entrar.place(x=983, y=590, width=230, height=40)
+        
+    def componentes_historico(self):
+        self.imagem_historico = PhotoImage(file=r'..\image\historico.png')
+        self.imagem_excel = PhotoImage(file=r'..\image\b_excel.png')
+        self.imagem_ficha = PhotoImage(file=r'..\image\g_ficha.png')
+
+        self.componentes_menu_bar()
+        lb_image = Label(self.root,image=self.imagem_historico)
+        lb_image.place(x=0, y=0)
+       #label data
+
+        self.relogio_h = Label(self.root, font=FONT_INIT)
+        self.relogio_h.place(x=683, y=92, width=169, height=43)
+        self.relogio()
+
+        self.dta_inicio = DateEntry(self.root,
+                            selectmode='day',
+                            font=('Poppins',20), 
+                            justify='center')
+
+        self.dta_fim = DateEntry(self.root,
+                            selectmode='day',
+                            font=('Poppins',20), 
+                            justify='center')
+
+        self.dta_inicio.place(x=180, y=92, width=157, height=43)
+        self.dta_fim.place(x=462, y=92, width=157, height=43)
+
+        self.bt_pesquisa_data = Button(self.root,
+                            text='PESQUISAR',
+                            cursor='hand2',
+                            font=('Poppins', 15),
+                            bg='#676AA9',
+                            fg='#ffffff',
+                            compound=LEFT,
+                            justify='left',
+                            border=False,
+                            command=lambda:self.popular_tabela_historico(self.dta_inicio.get_date(),self.dta_fim.get_date()))
+
+        self.bt_gera_pdf = Button(self.root,
+                            cursor='hand2',
+                            bg='#ffffff',
+                            border=False,
+                            image=self.imagem_ficha,
+                            command=lambda:self.selecao_de_item_historico())
+        
+
+
+        self.bt_gera_rel = Button(self.root,
+                            cursor='hand2',
+                            bg='#ffffff',
+                            border=False,
+                            image=self.imagem_excel,
+                            command=lambda:self.gerar_relatorio_rec(
+                                    self.dta_inicio.get_date(),
+                                    self.dta_fim.get_date()
+                                    ))
+
+        self.bt_pesquisa_data.place(x=683, y=92, width=169, height=43)
+        self.bt_gera_pdf.place(x=1260, y=92, width=51, height=51)
+        self.bt_gera_rel.place(x=1339, y=92, width=51, height=51)
+
+        #tabela
+        colunas = [
+                    'id',
+                    'matricula',
+                    'usuario',
+                    'produto',
+                    'descricao',
+                    'categoria',
+                    'data_min_rec',
+                    'alerta_comercial',
+                    'descri_status',
+                    'data_fabricacao',
+                    'data_vencimento',
+                    'data_recebimento',
+                    'hora_recebimento',
+                    'status_de_recebimento'
+
+        ]
+
+        self.tr_scroll = Scrollbar(self.root)
+        self.tr_vw_historico = ttk.Treeview(self.root, columns=colunas, show='headings',yscrollcommand=self.tr_scroll.set)
+        self.tr_scroll.config(command=self.tr_vw_historico.yview)
+
+        self.tr_vw_historico.column('id', width=1)
+        self.tr_vw_historico.column('matricula', width=50)
+        self.tr_vw_historico.column('usuario', width=25)
+        self.tr_vw_historico.column('produto', width=25)
+        self.tr_vw_historico.column('descricao', width=200)
+        self.tr_vw_historico.column('categoria', width=50)
+        self.tr_vw_historico.column('data_min_rec', width=50)
+        self.tr_vw_historico.column('alerta_comercial', width=50)
+        self.tr_vw_historico.column('descri_status', width=50)
+        self.tr_vw_historico.column('data_fabricacao', width=50)
+        self.tr_vw_historico.column('data_vencimento', width=50)
+        self.tr_vw_historico.column('data_recebimento', width=50)
+        self.tr_vw_historico.column('hora_recebimento', width=50)
+        self.tr_vw_historico.column('status_de_recebimento', width=50)
+
+
+        self.tr_vw_historico.heading('id',text= 'ID')
+        self.tr_vw_historico.heading('matricula',text= 'MATRICULA')
+        self.tr_vw_historico.heading('usuario',text= 'USUARIO')
+        self.tr_vw_historico.heading('produto',text= 'PRODUTO')
+        self.tr_vw_historico.heading('descricao',text= 'DESCRIÇÃO')
+        self.tr_vw_historico.heading('categoria',text= 'CATEGORIA')
+        self.tr_vw_historico.heading('data_min_rec',text= 'DATA_MIN_REC')
+        self.tr_vw_historico.heading('alerta_comercial',text= 'ALERTA_COMERCIAL')
+        self.tr_vw_historico.heading('descri_status',text= 'DESCRI_STATUS')
+        self.tr_vw_historico.heading('data_fabricacao',text= 'DATA_FABRICAÇÃO')
+        self.tr_vw_historico.heading('data_vencimento',text= 'DATA_VENCIMENTO')
+        self.tr_vw_historico.heading('data_recebimento',text= 'DATA_RECEBIMENTO')
+        self.tr_vw_historico.heading('hora_recebimento',text= 'HORA_RECEBIMENTO')
+        self.tr_vw_historico.heading('status_de_recebimento',text= 'STATUS_RECEBIMENTO')
+
+        self.tr_vw_historico.place(x=62, y=171, width=1303, height=552)
+        self.tr_scroll.place(x=1365, y=171, width=25, height=552)
+        self.popular_tabela_historico(self.data_recebimento, self.data_recebimento)
+
+        self.estilo_treeview = ttk.Style()
+        self.estilo_treeview.theme_use('clam')
+
 
     def tela(self):
         self.usuario ='Luiz Eduardo'
@@ -561,7 +705,9 @@ class TelaPrincipal:
         self.root.geometry("%dx%d+%d+%d" % (p[0],p[1],p[2],p[3]))
 
         #tela inicial:
-        self.componentes_tela_inicial()
+        self.componentes_historico()
+
+
 
 
     def insere_registros_rec(self):
@@ -581,11 +727,14 @@ class TelaPrincipal:
                 self.dta_venc_v,
                 self.dta_recebimento_v,
                 self.hra_recebimento_v,
-                self.status_recebimento
+                self.status_recebimento,
+                self.categoria_v,
+                self.valor_rec_minimo,
+                self.valor_ale_comercial
             )
 
         lista_dados.append(dados)
-        sql = """INSERT INTO tb_dataBase VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?) """
+        sql = """INSERT INTO tb_dataBase VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) """
         bd = DataBase(2)
         bd.insert(sql, lista_dados)
 
@@ -608,29 +757,107 @@ class TelaPrincipal:
         for dados in dados_rec:
             self.tr_vw.insert('','end',values=dados)
 
-    #========configurações============
-    def carrega_dados_confg(self):
-        try:
-            bd = DataBase(1)
-            sql = """SELECT * FROM tb_config WHERE id = 1"""
-            config1 = bd.selectAll(sql)
-
-            self.nome_relatorio.set(config1[0][3])
-            self.nome_pdf.set(config1[0][2])
-            self.dir_bd.set(config1[0][1])
-
-        except:
-            messagebox.showerror('Erro Banco', 'Não foi possivel carregar os dados...\nVerifique e tente novamente.')
+    def select_dados_historico(self,dta_inicio:date, dta_fim: date):
+        
         try:
             bd = DataBase(2)
-            sql = """SELECT * FROM tb_periodo_rec WHERE id = 1"""
-            config2 = bd.selectAll(sql)
+            sql =""" SELECT 
+                        id,
+                        matricula,
+                        conferente,
+                        produto,
+                        descricao,
+                        categoria,
+                        data_min_rec,
+                        alerta_comercial,
+                        descri_status,
+                        data_fabricacao,
+                        data_vencimento,
+                        data_recebimento,
+                        hora_recebimento,
+                        status_de_recebimento,
+                        percent_rec_minimo,
+                        percent_ale_comercial            
+                    FROM tb_dataBase WHERE data_recebimento BETWEEN '{}' AND '{}' ORDER BY id DESC """.format(dta_inicio, dta_fim)
 
-            self.scl_alert_comercial.set(config2[0][2])
-            self.scl_rec_minimo.set(config2[0][1])
+            self.dados_rec = bd.selectAll(sql)
+            return self.dados_rec
+        except:
+            messagebox.showerror('Erro de dados','Não foi possivel carregar os dados')
+            return
 
+    def popular_tabela_historico(self,dtaInicio:date, dtaFim: date):
+            dados_rec = self.select_dados_historico(dtaInicio, dtaFim)
+            self.tr_vw_historico.delete(*self.tr_vw_historico.get_children())
+            try:
+                for dados in dados_rec:
+                    self.tr_vw_historico.insert('','end',values=dados)
+            except:
+                pass
+
+    def selecao_de_item_historico(self):
+            try:
+                item = self.tr_vw_historico.selection()[0]
+                valores = self.tr_vw_historico.item(item,'values')
+                # import ipdb;ipdb.set_trace()
+                gerarPdf = Relatorios(
+                                        numSku = valores[3],
+                                        descri_produto = valores[4],
+                                        categoria = valores[5],
+                                        dta_fab = valores[9],
+                                        dta_venc = valores[10],
+                                        rec_minimo = valores[6],
+                                        alerta_comercial = valores[7],
+                                        dta_recebimento = valores[11],
+                                        usuario = valores[2],
+                                        matricula = valores[1],
+                                        nome_arquivo = self.nome_saida_pdf
+
+                )
+                gerarPdf.gerar_relatorio()       
+            except:
+                messagebox.showwarning('Itens','Nenhum item foi selecionado!')
+
+    #========configurações============
+    def select_dados_config(self,sql:str, numDataBase: int):
+        try:
+            bd = DataBase(numDataBase)
+            config = bd.selectAll(sql)
+            return config
         except:
             messagebox.showerror('Erro Banco', 'Não foi possivel carregar os dados...\nVerifique e tente novamente.')
+            return
+
+    def carrega_dados_config(self):
+
+
+        try:
+            sql = """SELECT * FROM tb_config WHERE id = 1"""
+            config1 =self.select_dados_config(sql, 1)
+
+            self.nome_rel = config1[0][3]
+            self.nome_saida_pdf = config1[0][2]
+            self.diretorio_bd = config1[0][1]
+
+            # self.nome_relatorio.set(config1[0][3])
+            # self.nome_pdf.set(config1[0][2])
+            # self.dir_bd.set(config1[0][1])
+
+        except:
+            pass
+        try:
+
+            sql = """SELECT * FROM tb_periodo_rec WHERE id = 1"""
+            config2 =self.select_dados_config(sql, 2)
+
+            self.valor_ale_comercial = config2[0][2]
+            self.valor_rec_minimo = config2[0][1]
+
+            # self.scl_alert_comercial.set(config2[0][2])
+            # self.scl_rec_minimo.set(config2[0][1])
+
+        except:
+            pass
 
     def atualiza_dados_config(self):
 
@@ -639,16 +866,44 @@ class TelaPrincipal:
             dir_bd = self.dir_bd.get()    
             scl_alert_comercial = self.scl_alert_comercial.get()
             scl_rec_minimo = self.scl_rec_minimo.get()
+
             sql = """UPDATE tb_config SET dir_bd = '{}', nome_pdf = '{}', nome_rel = '{}' WHERE id = 1""".format(dir_bd, nome_pdf, nome_relatorio)
             bd = DataBase(1)
             bd.update(sql)
 
             if scl_rec_minimo>= scl_alert_comercial:
                 messagebox.showwarning('Erro de Periodo','Recebimento minimo maior que alerta Comercial.')
+            elif scl_rec_minimo == 0 or scl_alert_comercial == 0:
+                messagebox.showwarning('Erro de Periodo','Defina valores Maiores que 0.')
             else:
                 sql2 = """UPDATE tb_periodo_rec SET r_minimo = {}, a_comercial = {} WHERE id = 1""".format(scl_rec_minimo, scl_alert_comercial)
                 bd = DataBase(2)
                 bd.update(sql2)
+
+            self.carrega_dados_config()
+
+    def gerar_relatorio_rec(self, dtaInicio: date, dtaFim: date):
+        database = self.select_dados_historico(dtaInicio, dtaFim)
+        dados = pd.DataFrame(data=database)
+        dados.columns = ['ID','MATRICULA','USUARIO','PRODUTO','DESCRIÇÃO','CATEGORIA','DATA_MIN_REC',
+                        'ALERTA_COMERCIAL','DESCRI_STATUS','DATA_FABRICAÇÃO','DATA_VENCIMENTO',
+                        'DATA_RECEBIMENTO','HORA_RECEBIMENTO','STATUS_RECEBIMENTO','PERCENT_REC_MINIMO','PERCENT_ALE_COMERCIAL'
+                        ]
+        colunas_datas= ['DATA_MIN_REC','ALERTA_COMERCIAL','DATA_FABRICAÇÃO','DATA_VENCIMENTO','DATA_RECEBIMENTO']
+        
+        dados[colunas_datas] = dados[colunas_datas].astype('datetime64[ns]')
+        dados['DATA_RECEBIMENTO']= pd.to_datetime(dados['DATA_RECEBIMENTO'],format='%d/%m/%Y')
+        # dados['DATA_RECEBIMENTO'].dt.str.__format__("%d/%m/%Y")
+        hora_rel = time.strftime('%H%M%S')
+        diretorio: str = askdirectory()
+        if diretorio:
+            dados.to_excel(diretorio +'\\' + self.nome_rel + f'_{hora_rel}.xlsx','Relatório',index=None)
+            messagebox.showinfo('Arquivo','Arquivo Gerado com Sucesso.')
+
+
+        # import ipdb; ipdb.set_trace()
+    
+
 
 if __name__ == '__main__':
     TelaPrincipal()
