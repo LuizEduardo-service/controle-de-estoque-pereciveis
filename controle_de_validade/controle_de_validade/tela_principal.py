@@ -3,8 +3,8 @@ from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
 from tkinter.filedialog import askdirectory
+from turtle import update
 import easygui
-from numpy import datetime64
 from tkcalendar import DateEntry
 from datetime import date, datetime
 from controle_de_validade.layout_pdf import Relatorios
@@ -16,6 +16,7 @@ import time
 
 root = Tk()
 FONT_INIT =('Poppins', 15)
+FONT_INIT_TXT_AREA =('Poppins', 10)
 
 class TelaPrincipal:
 
@@ -524,14 +525,25 @@ class TelaPrincipal:
         self.nome_pdf.set(self.nome_saida_pdf)
         self.dir_bd.set(self.diretorio_bd)
 
+    def componentes_usuarios(self):
+        self.destroi_widget()
+        self.componentes_menu_bar()
+        self.image_usuario = PhotoImage(file=r'../image/usuarios.png')
+        self.lb_img_usuario = Label(self.root,image=self.image_usuario)
+        self.lb_img_usuario.place(x=0, y=0)
+
     def componentes_menu_bar(self):
         self.menubar = Menu(self.root)
         self.menu = Menu(self.menubar)
+        self.menuBd = Menu(self.menubar)
 
         self.menubar.add_command(label='Inicio',command=self.componentes_tela_inicial)
-        self.menubar.add_command(label='Banco')
         self.menubar.add_command(label='Configurações',command=self.componentes_tela_config)
         self.menubar.add_command(label='Relatório',command=self.componentes_historico)
+
+        self.menubar.add_cascade(label='Banco', menu=self.menuBd)
+        self.menuBd.add_command(label='Produtos', command=self.componentes_produtos)
+        self.menuBd.add_command(label='Usuario', command=self.componentes_usuarios)
 
         self.root.config(menu=self.menubar)
 
@@ -693,8 +705,174 @@ class TelaPrincipal:
         self.tr_scroll.place(x=1365, y=171, width=25, height=552)
         self.popular_tabela_historico(self.data_recebimento, self.data_recebimento)
 
-        self.estilo_treeview = ttk.Style()
-        self.estilo_treeview.theme_use('clam')
+        self.style_treeview()
+
+    def componentes_produtos(self):
+        bd =DataBase(2)
+        sql="SELECT categoria FROM tb_categoria"
+        lista = bd.selectAll(sql)
+        self.imagem_produtos = PhotoImage(file=r'..\image\produtos.png')
+
+        self.componentes_menu_bar()
+        lb_image = Label(self.root,image=self.imagem_produtos)
+        lb_image.place(x=0, y=0)
+
+        self.id_produto = ''
+        self.txt_cd_produto = Entry(self.root,
+                                    font=FONT_INIT
+
+                                    
+        )
+
+        self.txt_cd_descri_produto = Entry(self.root,
+                                    font=FONT_INIT
+ 
+                                    
+        )
+        
+        self.cbx_cd_categoria_produto = ttk.Combobox(self.root,
+                                                     font= FONT_INIT,
+                                                     values=lista
+                                                     
+                                                            
+        )
+
+        self.cbx_cd_filtro = ttk.Combobox(self.root,
+                                         font= FONT_INIT,
+                                         values=['PRODUTO','DESCRIÇÃO','CATEGORIA']
+                                        
+                                                           
+        )
+
+        self.txt_campo_pesquisa = Entry(self.root,
+                                    font=FONT_INIT,
+
+                                    
+        )
+
+        self.txtArea_produtos = Text(self.root, font=FONT_INIT_TXT_AREA, wrap='word')
+
+
+        self.txt_cd_produto.place(x=61, y=145, width=197, height=43)
+        self.txt_cd_descri_produto.place(x=61, y=230, width=632, height=43)
+        self.cbx_cd_categoria_produto.place(x=61, y=314, width=290, height=43)
+        self.txt_campo_pesquisa.place(x=776, y=224, width=500, height=43)
+        self.cbx_cd_filtro.place(x=777, y=140, width=253, height=43)
+        self.txtArea_produtos.place(x=61, y=420, width=632, height=211)
+
+        self.btn_inserir = Button(self.root,
+                                 text='INSERIR', 
+                                 font=FONT_INIT, 
+                                 bg='#676AA9', 
+                                 fg='#ffffff',
+                                 justify='center',
+                                 cursor='hand2',
+                                 command=lambda:self.insert_produtos()
+
+                                  )
+
+        self.btn_update = Button(self.root,
+                                 text='ATUALIZAR', 
+                                 font=FONT_INIT, 
+                                 bg='#676AA9', 
+                                 fg='#ffffff',
+                                 justify='center',
+                                  cursor='hand2',
+                                  command=lambda:self.update_produtos()
+                                  )
+
+        self.btn_delete = Button(self.root,
+                                 text='DELETAR', 
+                                 font=FONT_INIT, 
+                                 fg='#ffffff',
+                                 bg='#676AA9', 
+                                 justify='center',
+                                  cursor='hand2',
+                                  command=lambda:self.delete_produtos()
+                                  )
+        self.btn_filtro_produto = Button(self.root,
+                                 text='FILTRO', 
+                                 font=FONT_INIT_TXT_AREA, 
+                                 fg='#ffffff',
+                                 bg='#676AA9', 
+                                 justify='center',
+                                  cursor='hand2',
+                                  command=lambda:self.filtro_dados_produtos()
+                                  )
+
+
+        self.btn_inserir.place(x=75, y=665, width=169, height=51)
+        self.btn_update.place(x=279, y=665, width=169, height=51)
+        self.btn_delete.place(x=483, y=665, width=169, height=51)
+        self.btn_filtro_produto.place(x=1305, y=225, width=70, height=43)
+
+        self.scroll_produtos = Scrollbar(self.root)
+        self.tr_vw_produtos = ttk.Treeview(self.root,
+                                                    columns=['id','produto','descrição','categoria'],
+                                                    show='headings',
+                                                    yscrollcommand=self.scroll_produtos.set)
+
+        self.scroll_produtos.config(command=self.tr_vw_produtos.yview)
+        self.tr_vw_produtos.bind('<Double-1>', self.duplo_click_tabela_produtos)
+
+        self.tr_vw_produtos.column('id', width=1)
+        self.tr_vw_produtos.column('produto', width=70)
+        self.tr_vw_produtos.column('descrição', width=330)
+        self.tr_vw_produtos.column('categoria', width=100)
+
+        self.tr_vw_produtos.heading('id',text='')
+        self.tr_vw_produtos.heading('produto',text='PRODUTO')
+        self.tr_vw_produtos.heading('descrição',text='DESCRIÇÃO')
+        self.tr_vw_produtos.heading('categoria',text='CATEGORIA')
+
+        self.tr_vw_produtos.place(x=777, y=333, width=557, height=383)
+        self.scroll_produtos.place(x=1335, y=333, width=28, height=383)
+
+        self.style_treeview()
+        self.popular_tabela_produtos()
+        
+    def inserir_produto_massivo(self, dados: str):
+
+        # dados = self.txtArea_produtos.get("1.0","end - 1c")
+        lista_final: list = []
+        erros: list = []
+        lista_dados = dados.split(',')
+        # import ipdb; ipdb.set_trace()
+        if lista_dados:
+            for registro in lista_dados:
+                n_registro = registro
+                if registro != '':
+
+                    if '\n' in registro:
+                        registro = registro.strip('\n')
+                    try:
+                        produto, descri, careg = registro.split(';')
+                        dados = (None, produto, descri, careg.upper())
+
+                        lista_final.append(dados)
+                        dados = ()
+                    except ValueError as error:
+                        print(n_registro)
+                        erros.append(n_registro)
+                        dados = ()
+
+            self.insert_produto(lista_final)
+            self.txtArea_produtos.delete("1.0","end - 1c")
+            if erros:
+                [self.txtArea_produtos.insert(END, erro) for erro in erros]
+                # self.txtArea_produtos.insert(END, erro)
+                messagebox.showerror('Erro dados', 'Dados com formato incorreto, verifique e tente novamente.')
+
+                    
+    def insert_produto(self, listaDados: list):
+        if len(listaDados)> 0:
+            try:
+                bd = DataBase(2)
+                sql = f'INSERT INTO tb_produtos VALUES (?, ?, ?, ?)'
+                bd.insert(sql, listaDados)
+                messagebox.showinfo('Inserção','Dados inseridos com sucesso')
+            except:
+                messagebox.showerror('Inserção','Não foi possivel inserir os dados, verifique e tente novamente.')
 
 
     def tela(self):
@@ -705,7 +883,7 @@ class TelaPrincipal:
         self.root.geometry("%dx%d+%d+%d" % (p[0],p[1],p[2],p[3]))
 
         #tela inicial:
-        self.componentes_historico()
+        self.componentes_produtos()
 
 
 
@@ -786,6 +964,26 @@ class TelaPrincipal:
             messagebox.showerror('Erro de dados','Não foi possivel carregar os dados')
             return
 
+    def select_dados_produtos(self, sqlString:str =''):
+        if sqlString:
+            sql = sqlString
+        else:
+            sql =""" SELECT 
+                id,
+                produto,
+                descricao,
+                categoria 
+            FROM tb_produtos ORDER BY id DESC """
+
+        
+        try:
+            bd = DataBase(2)
+            self.dados_produtos = bd.selectAll(sql)
+            return self.dados_produtos
+        except:
+            messagebox.showerror('Erro de dados','Não foi possivel carregar os dados do produto')
+            return
+            
     def popular_tabela_historico(self,dtaInicio:date, dtaFim: date):
             dados_rec = self.select_dados_historico(dtaInicio, dtaFim)
             self.tr_vw_historico.delete(*self.tr_vw_historico.get_children())
@@ -794,6 +992,19 @@ class TelaPrincipal:
                     self.tr_vw_historico.insert('','end',values=dados)
             except:
                 pass
+
+    def popular_tabela_produtos(self, lista_dados:list =[]):
+        if lista_dados:
+            dados_prod = lista_dados
+        else:
+            dados_prod = self.select_dados_produtos()
+
+        self.tr_vw_produtos.delete(*self.tr_vw_produtos.get_children())
+        try:
+            for dados in dados_prod:
+                self.tr_vw_produtos.insert('','end',values=dados)
+        except:
+            pass
 
     def selecao_de_item_historico(self):
             try:
@@ -818,6 +1029,11 @@ class TelaPrincipal:
             except:
                 messagebox.showwarning('Itens','Nenhum item foi selecionado!')
 
+    def selecao_item_produto(self) -> list:
+        item = self.tr_vw_produtos.selection()[0]
+        valores = self.tr_vw_produtos.item(item,'values')
+        return valores
+        
     #========configurações============
     def select_dados_config(self,sql:str, numDataBase: int):
         try:
@@ -900,10 +1116,90 @@ class TelaPrincipal:
             dados.to_excel(diretorio +'\\' + self.nome_rel + f'_{hora_rel}.xlsx','Relatório',index=None)
             messagebox.showinfo('Arquivo','Arquivo Gerado com Sucesso.')
 
+    def style_treeview(self):
+        self.estilo_treeview = ttk.Style()
+        self.estilo_treeview.theme_use('clam')
 
-        # import ipdb; ipdb.set_trace()
-    
+    def delete_produtos(self):
+        valores =  self.selecao_item_produto()
+        bd = DataBase(2)
+        sql = f"""DELETE FROM tb_produtos WHERE id = {valores[0]}"""
+        bd.delete(sql)
+        self.popular_tabela_produtos()
 
+    def update_produtos(self):
+        dados = (self.id_produto, self.txt_cd_produto.get(), self.txt_cd_descri_produto.get(), self.cbx_cd_categoria_produto.get())
+        valid = [True if value != '' else False for value in dados]
+        if False not in valid:
+            db = DataBase(2)
+            sql = """UPDATE tb_produtos SET produto = '{}', 
+                        descricao = '{}', categoria = '{}' WHERE id = {}
+                """.format(self.txt_cd_produto.get(), 
+                           self.txt_cd_descri_produto.get(), 
+                           self.cbx_cd_categoria_produto.get(),
+                           self.id_produto)
+            db.update(sql)
+            self.popular_tabela_produtos()
+            self.txt_cd_produto.delete(0, END)
+            self.txt_cd_descri_produto.delete(0, END)
+            self.cbx_cd_categoria_produto.delete(0, END)
 
+    def insert_produtos(self):
+        lista: list = []
+        dados = (None, self.txt_cd_produto.get(), self.txt_cd_descri_produto.get(), self.cbx_cd_categoria_produto.get())
+        valid = [True if value != '' else False for value in dados]
+        dados_massivo = self.txtArea_produtos.get("1.0","end - 1c")
+
+        if False not in valid:
+            lista.append(dados) 
+            db=DataBase(2)
+            sql="""INSERT INTO tb_produtos VALUES(?,?,?,?)"""
+            db.insert(sql, lista)
+            self.popular_tabela_produtos()
+            # messagebox.showwarning('Erro Dados', 'Verifique os dados e tente novamente.')
+
+        if dados_massivo:
+            self.inserir_produto_massivo(dados= dados_massivo)
+            self.popular_tabela_produtos()
+
+    def filtro_dados_produtos(self):
+        tipo = self.cbx_cd_filtro.get()
+        proc = self.txt_campo_pesquisa.get()
+        if tipo:
+            if tipo =='PRODUTO':
+                n_tipo = 'produto'
+            elif tipo =='DESCRIÇÃO':
+                n_tipo = 'descricao'
+            elif tipo =='CATEGORIA':
+                n_tipo = 'categoria'
+
+            sql = """SELECT              
+                id,
+                produto,
+                descricao,
+                categoria 
+                FROM tb_produtos WHERE {} LIKE '{}%'
+                ORDER BY id DESC """.format(n_tipo, proc)
+
+            print(sql)
+            dados = self.select_dados_produtos(sql)
+            print(dados)
+            self.popular_tabela_produtos(dados)
+
+    #ações
+    def duplo_click_tabela_produtos(self, event):
+            self.tr_vw_produtos.selection()
+            self.txt_cd_produto.delete(0, END)
+            self.txt_cd_descri_produto.delete(0, END)
+            self.cbx_cd_categoria_produto.delete(0, END)
+
+            for n in self.tr_vw_produtos.selection():
+                self.id_produto, col2, col3, col4 = self.tr_vw_produtos.item(n, 'values')
+                self.txt_cd_produto.insert(END, col2)
+                self.txt_cd_descri_produto.insert(END, col3)
+                self.cbx_cd_categoria_produto.insert(END, col4)
+        
+
+            
 if __name__ == '__main__':
     TelaPrincipal()
