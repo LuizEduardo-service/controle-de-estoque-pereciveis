@@ -32,8 +32,8 @@ class DataBase:
         self.conn.commit()
         self.conn.close()
 
-    def delete(self, stringSQL, id: int):
-        self.cursor.executemany(stringSQL, id)
+    def delete(self, stringSQL):
+        self.cursor.execute(stringSQL)
         self.conn.commit()
         self.conn.close()
 
@@ -119,7 +119,56 @@ class DataBase:
    
 
 if __name__ == '__main__':
+    lista =[
+(None, 'GAMES/CAMERAS'),
+(None, 'BEBES'),
+(None, 'TELEFONIA CELULAR'),
+(None, 'ACESSORIOS E COMPLEMENTOS'),
+(None, 'ESPORTE'),
+(None, 'FERRAMENTAS'),
+(None, 'AUTOMOTIVOS'),
+(None, 'CAMA/MESA/BANHO'),
+(None, 'ELETRO-PORTATEIS'),
+(None, 'BRINQUEDOS/PEDAL'),
+(None, 'INOX/ALUMINIO/ETC'),
+(None, 'INFORMATICA E EQUIP.ESCRITORIO'),
+(None, 'SOM LEVE'),
+(None, 'BELEZA & SAUDE'),
+(None, 'MOVEIS PLANEJADOS'),
+(None, 'DECORACOES'),
+(None, 'PERFUMARIA'),
+(None, 'QUEIMADORES'),
+(None, 'RELOGIOS'),
+(None, 'ESTOFADOS'),
+(None, 'LAVADORAS'),
+(None, 'MOVEIS DE SALA DE JANTAR'),
+(None, 'TELEVISORES'),
+(None, 'MALAS / MOCHILAS / ACESSORIOS'),
+(None, 'SAZONAIS LINHA BRANCA'),
+(None, 'MOVEIS DE COPA E COZINHA'),
+(None, 'MOVEIS DE QUARTO'),
+(None, 'SAZONAIS PORTATEIS'),
+(None, 'LINHA INDUSTRIAL'),
+(None, 'CALCADOS/ACESSORIOS FEMININO'),
+(None, 'MOVEIS INFANTIS'),
+(None, 'CONFECCAO MASCULINA'),
+(None, 'COLCHOES'),
+(None, 'CONFECCAO FEMININA'),
+(None, 'PRODUTOS DE LIMPEZA'),
+(None, 'MOVEIS SALA DE ESTAR'),
+(None, 'CONFECCAO BEBE/INFANTIL'),
+(None, 'REFRIGERACAO'),
+(None, 'DISNEY SUPER LOJA'),
+(None, 'PAPELARIA E MAT.ESCRITORIO'),
+(None, 'CALCADOS/ACESSORIOS INFANTIL'),
+(None, 'REVISTAS/LIVROS'),
+(None, 'DVD FILMES E CDS MUSICAIS'),
+(None, 'BICICLETAS'),
+(None, 'TAPECARIA')
+
+    ]
     bd = DataBase(2)
-    bd.cria_tabelas()
-    sql = f'INSERT INTO tb_config VALUES (?, ?, ?, ?, ?, ?, ?)'
-    # bd.insert(sql, config)
+    # bd.cria_tabelas()
+    sql = f'INSERT INTO tb_categoria VALUES (?,?)'
+
+    bd.insert(sql, lista)
