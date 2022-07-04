@@ -168,7 +168,7 @@ if __name__ == '__main__':
 
     ]
     bd = DataBase(2)
-    # bd.cria_tabelas()
-    sql = f'INSERT INTO tb_categoria VALUES (?,?)'
+    bd.cria_tabelas()
+    # sql = f'INSERT INTO tb_categoria VALUES (?,?)'
 
-    bd.insert(sql, lista)
+    # bd.insert(sql, lista)
