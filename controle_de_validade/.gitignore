@@ -2,7 +2,7 @@
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,visualstudiocode
 
 #pasta
-.data/
+controle-de-estoque-pereciveis\controle_de_validade\data
 ### Python ###
 # Byte-compiled / optimized / DLL files
 __pycache__/
