@@ -1,9 +1,11 @@
+import os
 from time import sleep
 from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
 from tkinter.filedialog import askdirectory
 import easygui
+from numpy import True_
 from tkcalendar import DateEntry
 from datetime import date, datetime
 from controle_de_validade.layout_pdf import Relatorios
@@ -20,6 +22,9 @@ FONT_INIT_TXT_AREA =('Poppins', 10)
 class TelaPrincipal:
 
     def __init__(self) -> None:
+        self.usuario_logado = ''
+        self.matricula_logado = ''
+        self.acesso_logado = ''
         self.nome_saida_pdf =''
         self.nome_rel =''
         self.diretorio_bd = ''
@@ -116,8 +121,8 @@ class TelaPrincipal:
         self.alerta_comercial_v = self.a_comercial
         self.dta_recebimento_v = self.data_recebimento
         self.hra_recebimento_v = time.strftime('%H:%M')
-        self.usuario_v = self.usuario
-        self.matricula_v = self.matricula
+        self.usuario_v = self.usuario_logado
+        self.matricula_v = self.matricula_logado
         self.receber_v = self.btReceber.get()
 
     def relogio(self):
@@ -312,6 +317,9 @@ class TelaPrincipal:
         self.l_usuario = StringVar()
         self.l_matricula = StringVar()
         self.msg = StringVar()
+
+        self.l_usuario.set(self.usuario_logado)
+        self.l_matricula.set(self.matricula_logado)
 
 
         self.lb_rec_minimo = Label(self.root,
@@ -574,9 +582,57 @@ class TelaPrincipal:
                                  cursor='hand2',
                                  border=False,
                                  font=('Poppins', 25),
-                                 command=lambda:self.componentes_tela_inicial())
+                                 command=lambda:self.logar_usuario(2))
+
+    def componentes_cadastro_usuario(self):
+        self.destroi_widget()
+        self.image_cad_login = PhotoImage(file=r'../image/cadastroLogin.png')
+        self.lb_cad_login = Label(self.root,image=self.image_cad_login)
+        self.lb_cad_login.place(x=0, y=0)
+       
+        self.lg_cad_usuario = IntVar()
+        self.lg_cad_senha = StringVar()
+        self.lg_rept_senha = StringVar()
+
+        self.txt_cad_usuario = Entry(self.root,
+                                font=('Poppins', 25),
+                                bg='#ffffff',
+                                justify='center',
+                                border=False,
+                                textvariable=self.lg_cad_usuario)
+
+        self.txt_cad_senha = Entry(self.root,
+                                font=('Poppins', 25),
+                                show='•',
+                                bg='#ffffff',
+                                justify='center',
+                                border=False,
+                                textvariable=self.lg_cad_senha)
+
+        self.txt_rept_senha = Entry(self.root,
+                                font=('Poppins', 25),
+                                show='•',
+                                bg='#ffffff',
+                                justify='center',
+                                border=False,
+                                textvariable=self.lg_rept_senha)
+
+        self.txt_cad_usuario.place(x=953, y=286, width=352, height=43)
+        self.txt_cad_senha.place(x=953, y=392, width=352, height=43)
+        self.txt_rept_senha.place(x=953, y=503, width=352, height=43)
+        self.lg_cad_usuario.set('')
+
+        self.btn_cad_entrar = Button(self.root,
+                                 text='Entrar',
+                                 bg='#676AA9',
+                                 fg='#ffffff',
+                                 justify='center',
+                                 cursor='hand2',
+                                 border=False,
+                                 font=('Poppins', 25),
+                                 command=lambda:self.logar_usuario(1))
         
-        self.btn_entrar.place(x=983, y=590, width=230, height=40)
+        self.btn_cad_entrar.place(x=983, y=590, width=230, height=40)
         
     def componentes_historico(self):
         self.imagem_historico = PhotoImage(file=r'..\image\historico.png')
@@ -828,9 +884,10 @@ class TelaPrincipal:
         self.style_treeview()
         self.popular_tabela_produtos()
 
-    def componentes_usuarios(self):
+    def componentes_usuarios(self, primeiro_acesso:bool = True):
         self.destroi_widget()
-        self.componentes_menu_bar()
+        if primeiro_acesso:
+            self.componentes_menu_bar()
 
         self.imagem_usuarios = PhotoImage(file=r'..\image\usuarios.png')
         lb_image = Label(self.root,image=self.imagem_usuarios)
@@ -887,16 +944,33 @@ class TelaPrincipal:
         self.cb_nivel_acesso.place(x=68, y=497, width=215, height=43)
         self.lb_senha.place(x=316, y=497, width=215, height=43)
 
-        self.btn_inserir_usu =Button(self.root,
-                                 text='INSERIR', 
-                                 font=FONT_INIT, 
-                                 bg='#676AA9', 
-                                 fg='#ffffff',
-                                 justify='center',
-                                 cursor='hand2',
-                                 command=lambda:self.inserir_usuario()
+        if not primeiro_acesso:
+                self.var_matricula.set(self.nova_senha)
+                self.var_nome_usu.set(self.novo_usuario)
+                self.cb_nivel_acesso.set('NIVEL 2')
 
-                                  )
+        if primeiro_acesso:
+            self.btn_inserir_usu =Button(self.root,
+                                    text='INSERIR', 
+                                    font=FONT_INIT, 
+                                    bg='#676AA9', 
+                                    fg='#ffffff',
+                                    justify='center',
+                                    cursor='hand2',
+                                    command=lambda:self.inserir_usuario()
+
+                                    )
+        else:
+            self.btn_inserir_usu =Button(self.root,
+                                    text='INSERIR', 
+                                    font=FONT_INIT, 
+                                    bg='#676AA9', 
+                                    fg='#ffffff',
+                                    justify='center',
+                                    cursor='hand2',
+                                    command=lambda:self.inserir_primeiro_usuario()
+
+                                    )
 
         self.btn_delete_usu =Button(self.root,
                                  text='DELETAR', 
@@ -936,29 +1010,38 @@ class TelaPrincipal:
         self.btn_update_usu.place(x=502, y=627, width=169, height=51)
         self.btn_reset_senha.place(x=555, y=499, width=195, height=45)
 
+        if primeiro_acesso:
+            self.btn_delete_usu.config(state='disabled')
+            self.btn_update_usu.config(state='disabled')
+            self.btn_reset_senha.config(state='disabled')
 
-        self.scroll_usu = Scrollbar(self.root)
-        self.tr_vw_usuarios = ttk.Treeview(self.root,columns=['id','usuario', 'cargo', 'nivel_acesso'], show='headings', yscrollcommand=self.scroll_usu.set)
-        self.tr_vw_usuarios.bind('<Double-1>', self.duplo_click_tabela_usuarios)
-        self.scroll_usu.config(command=self.tr_vw_usuarios.yview)
+        if primeiro_acesso:
+            self.scroll_usu = Scrollbar(self.root)
+            self.tr_vw_usuarios = ttk.Treeview(self.root,
+                                                columns=['id','usuario', 'cargo', 'nivel_acesso'], 
+                                                show='headings', 
+                                                yscrollcommand=self.scroll_usu.set)
 
-        self.tr_vw_usuarios.column('id',width=0)
-        self.tr_vw_usuarios.column('usuario',width=300)
-        self.tr_vw_usuarios.column('cargo',width=100)
-        self.tr_vw_usuarios.column('nivel_acesso',width=100)
+            self.tr_vw_usuarios.bind('<Double-1>', self.duplo_click_tabela_usuarios)
+            self.scroll_usu.config(command=self.tr_vw_usuarios.yview)
 
-        self.tr_vw_usuarios.heading('id', text='ID')
-        self.tr_vw_usuarios.heading('usuario', text='USUARIO')
-        self.tr_vw_usuarios.heading('cargo', text='CARGO')
-        self.tr_vw_usuarios.heading('nivel_acesso', text='NIVEL_ACESSO')
+            self.tr_vw_usuarios.column('id',width=0)
+            self.tr_vw_usuarios.column('usuario',width=300)
+            self.tr_vw_usuarios.column('cargo',width=100)
+            self.tr_vw_usuarios.column('nivel_acesso',width=100)
 
-        self.tr_vw_usuarios.place(x=791, y=122, width=568, height=599)
-        self.scroll_usu.place(x=1360, y=123, width=29, height=599)
-        
+            self.tr_vw_usuarios.heading('id', text='ID')
+            self.tr_vw_usuarios.heading('usuario', text='USUARIO')
+            self.tr_vw_usuarios.heading('cargo', text='CARGO')
+            self.tr_vw_usuarios.heading('nivel_acesso', text='NIVEL_ACESSO')
+
+            self.tr_vw_usuarios.place(x=791, y=122, width=568, height=599)
+            self.scroll_usu.place(x=1360, y=123, width=29, height=599)
+            
 
 
-        self.style_treeview()
-        self.popular_tabela_usuario()
+            self.style_treeview()
+            self.popular_tabela_usuario()
 
     def inserir_produto_massivo(self, dados: str):
 
@@ -1004,15 +1087,19 @@ class TelaPrincipal:
 
 
     def tela(self):
-        self.usuario ='Luiz Eduardo'
-        self.matricula = '3896595'
         self.root.title('Controle de Validade')
         p = self.centralizacao_tela(1440,750,self.root)
         self.root.geometry("%dx%d+%d+%d" % (p[0],p[1],p[2],p[3]))
 
         #tela inicial:
-        self.componentes_login_usuario()
+        self.componentes_cadastro_usuario()
+        # self.imagem_acesso = PhotoImage(file=r'..\image\p_acesso.png')
+        # lb_image = Label(self.root,image=self.imagem_acesso)
+        # lb_image.place(x=0, y=0)
 
+        # self.btn_primeiro_acesso = Button(self.root, text='Clique aqui', font=('Poppins', 20),command=lambda:self.primeiro_acesso())
+
+        # self.btn_primeiro_acesso.place(x=192, y=396, width=354, height=118)
 
 
     def insere_registros_rec(self):
@@ -1202,13 +1289,19 @@ class TelaPrincipal:
         except:
             pass
 
-    def atualiza_dados_config(self):
-
-            nome_relatorio = self.nome_relatorio.get()
-            nome_pdf = self.nome_pdf.get()
-            dir_bd = self.dir_bd.get()    
-            scl_alert_comercial = self.scl_alert_comercial.get()
-            scl_rec_minimo = self.scl_rec_minimo.get()
+    def atualiza_dados_config(self, lista_acesso = []):
+            if len(lista_acesso)> 0:
+                nome_relatorio = lista_acesso[0]
+                nome_pdf = lista_acesso[1]
+                dir_bd = lista_acesso[2]    
+                scl_alert_comercial = lista_acesso[3]
+                scl_rec_minimo = lista_acesso[4]
+            else:
+                nome_relatorio = self.nome_relatorio.get()
+                nome_pdf = self.nome_pdf.get()
+                dir_bd = self.dir_bd.get()    
+                scl_alert_comercial = self.scl_alert_comercial.get()
+                scl_rec_minimo = self.scl_rec_minimo.get()
 
             sql = """UPDATE tb_config SET dir_bd = '{}', nome_pdf = '{}', nome_rel = '{}' WHERE id = 1""".format(dir_bd, nome_pdf, nome_relatorio)
             bd = DataBase(1)
@@ -1476,6 +1569,63 @@ class TelaPrincipal:
     def oculta_senha(self, senha:str):
         cript_senha = "".join(['•' for letra in senha])
         return cript_senha
+
+    # PRIMEIRO ACESSO USUARIO
+    def primeiro_acesso(self):
+        opc = messagebox.askyesnocancel('Banco de Dados', 'Localize o banco de dados para continuar.')
+
+        if opc:
+            try:
+                diretorio = easygui.fileopenbox()
+
+                bd =DataBase(2)
+                caminho_dir = os.path.dirname(diretorio)
+                v_conexao = bd.teste_de_conexao(diretorio)
+                if v_conexao:
+                    lista_acesso = ['RELATÓRIO_REC', 'PDF', caminho_dir, 75, 25]
+                    self.atualiza_dados_config(lista_acesso)
+                else:
+                    messagebox.showerror('Erro conexão', 'Erro de conexão!\nVerifique os dados e tente novamente.')
+
+            except:
+                pass
+
+    def validacao_senha(self,usuario, senha, v_senha):
+        
+        if senha == v_senha and usuario !='':
+            return True
+        elif senha =='' or v_senha =='' or usuario =='':
+            messagebox.showerror('Erro Senha','Campos de senha ou matricula em branco!!!\nVerifique e tente novamente.')
+            return False
+        else:
+            messagebox.showerror('Erro Senha','Senhas não conferem!!\nVerifique e tente novamente.')
+            return False
+
+    def logar_usuario(self, tipoAcesso: int):
+
+        if tipoAcesso == 1:
+            resultado = self.validacao_senha(self.lg_cad_usuario.get(), self.lg_cad_senha.get(), self.lg_rept_senha.get())
+            if resultado:
+                self.nova_senha = self.lg_cad_senha.get()
+                self.novo_usuario = self.lg_cad_usuario.get()
+                self.componentes_usuarios(False)
+
+        else:
+            resultado = self.validacao_senha(self.lg_usuario.get(), self.lg_senha.get(), self.lg_senha.get())
+            if resultado:
+                bd = DataBase(2)
+                sql = """SELECT matricula, senha FROM tb_usuarios WHERE matricula = '{}' and senha = '{}'
+                """.format(self.lg_usuario.get(), self.lg_senha.get())
+                self.dados_usuario = bd.selectAll(sql)
+                if (self.dados_usuario)> 0:
+                    self.usuario_logado = self.dados_produtos[0][2]
+                    self.matricula_logado = self.dados_produtos[0][1]
+                    self.acesso_logado = self.dados_produtos[0][5]
+                    self.componentes_tela_inicial()
+
+    def inserir_primeiro_usuario(self):
+        self.inserir_usuario()
+        self.componentes_login_usuario()
 
 if __name__ == '__main__':
     TelaPrincipal()

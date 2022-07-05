@@ -10,6 +10,16 @@ class DataBase:
         self.tipo = tipo
         self.connect_data_base(self.tipo)
 
+    def teste_de_conexao(self, dir):
+        try:
+            self.conn = sq.connect(dir)
+            self.conn.close()
+            return True
+        except:
+            return False
+
+
+
     def connect_data_base(self, tipo: int):
         try:
 
