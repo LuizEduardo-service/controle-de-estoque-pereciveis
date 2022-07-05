@@ -5,6 +5,8 @@ config = [
 
 class DataBase:
     def __init__(self, tipo: int) -> None:
+        self.dbGlobal =r'C:\Users\2103896595\Desktop\outros\banco validade\dataBaseGlobal.db'
+        self.dblocal =r'C:\Users\2103896595\Desktop\outros\banco validade\dataBaseLocal.db'
         self.tipo = tipo
         self.connect_data_base(self.tipo)
 
@@ -12,10 +14,10 @@ class DataBase:
         try:
 
             if tipo == 1:
-                self.conn = sq.connect('../data/dataBaseLocal.db')
+                self.conn = sq.connect(self.dblocal)
                 self.cursor = self.conn.cursor()
             elif tipo == 2:
-                self.conn = sq.connect('../data/dataBaseGlobal.db')
+                self.conn = sq.connect(self.dbGlobal)
                 self.cursor = self.conn.cursor()
             else:
                 pass
@@ -83,7 +85,8 @@ class DataBase:
                             usuario VARCHAR(150),
                             cargo VARCHAR(50),
                             setor VARCHAR(50),
-                            acesso INTEGER
+                            acesso INTEGER,
+                            senha VARCHAR(50)
                               
                             )""")
 

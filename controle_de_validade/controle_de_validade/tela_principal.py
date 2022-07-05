@@ -708,12 +708,17 @@ class TelaPrincipal:
         self.style_treeview()
 
     def componentes_produtos(self):
+        self.destroi_widget()
+
         bd =DataBase(2)
-        sql="SELECT categoria FROM tb_categoria"
+        sql="SELECT categoria FROM tb_categoria ORDER BY categoria ASC"
         lista = bd.selectAll(sql)
-        self.imagem_produtos = PhotoImage(file=r'..\image\produtos.png')
+        nova_lista = [item[0] for item in lista]
+        
 
         self.componentes_menu_bar()
+
+        self.imagem_produtos = PhotoImage(file=r'..\image\produtos.png')
         lb_image = Label(self.root,image=self.imagem_produtos)
         lb_image.place(x=0, y=0)
 
@@ -732,7 +737,7 @@ class TelaPrincipal:
         
         self.cbx_cd_categoria_produto = ttk.Combobox(self.root,
                                                      font= FONT_INIT,
-                                                     values=lista
+                                                     values=nova_lista
                                                      
                                                             
         )
