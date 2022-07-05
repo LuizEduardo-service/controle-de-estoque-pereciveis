@@ -3,7 +3,6 @@ from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
 from tkinter.filedialog import askdirectory
-from turtle import update
 import easygui
 from tkcalendar import DateEntry
 from datetime import date, datetime
@@ -525,13 +524,6 @@ class TelaPrincipal:
         self.nome_pdf.set(self.nome_saida_pdf)
         self.dir_bd.set(self.diretorio_bd)
 
-    def componentes_usuarios(self):
-        self.destroi_widget()
-        self.componentes_menu_bar()
-        self.image_usuario = PhotoImage(file=r'../image/usuarios.png')
-        self.lb_img_usuario = Label(self.root,image=self.image_usuario)
-        self.lb_img_usuario.place(x=0, y=0)
-
     def componentes_menu_bar(self):
         self.menubar = Menu(self.root)
         self.menu = Menu(self.menubar)
@@ -835,7 +827,139 @@ class TelaPrincipal:
 
         self.style_treeview()
         self.popular_tabela_produtos()
+
+    def componentes_usuarios(self):
+        self.destroi_widget()
+        self.componentes_menu_bar()
+
+        self.imagem_usuarios = PhotoImage(file=r'..\image\usuarios.png')
+        lb_image = Label(self.root,image=self.imagem_usuarios)
+        lb_image.place(x=0, y=0)
+
+
+        self.var_matricula = StringVar()
+        self.var_nome_usu = StringVar()
+        self.var_cargo = StringVar()
+        self.var_setor = StringVar()
+        self.var_nivel_acesso = StringVar()
+        self.var_senha = StringVar()
+
+        self.txt_matricula = Entry(self.root, 
+                                    font=FONT_INIT, 
+                                    textvariable=self.var_matricula)
+
+        self.txt_nome_usu = Entry(self.root, 
+                                    font=FONT_INIT, 
+                                    textvariable=self.var_nome_usu)
+
+        lista_cargo =  ['CONFERENTE', 'ASSIS ADM', 'SUPERVISOR', 'COORDENADOR', 'OPERADOR', 'OUTROS']
+        self.cb_cargo = ttk.Combobox(self.root,
+                                    values=lista_cargo, 
+                                    state='readonly',
+                                    font=FONT_INIT, 
+                                    textvariable=self.var_cargo)
+
+        lista_setor =  ['RECEBIMENTO', 'ARMAZENAGEM', 'QUALIDADE', 'PICKING', 'PACKING', 'EXPEDIÇÃO', 'INSUCESSO', 'OUTROS']
+        self.cb_setor = ttk.Combobox(self.root,
+                                        values=lista_setor, 
+                                        font=FONT_INIT,
+                                        state='readonly',
+                                        textvariable=self.var_setor)
+        lista_acesso = ['NIVEL 1', 'NIVEL 2']
+        self.cb_nivel_acesso = ttk.Combobox(self.root,
+                                            values=lista_acesso, 
+                                            font=FONT_INIT,
+                                            state='readonly',
+                                            textvariable=self.var_nivel_acesso)
+
+        self.lb_senha = Label(self.root,
+                                font=FONT_INIT,
+                                textvariable=self.var_senha)
+
+        self.cb_cargo.set('')
+        self.cb_setor.set('')
+        self.cb_nivel_acesso.set('')
+
+        self.txt_matricula.place(x=68, y=150, width=197, height=43)
+        self.txt_nome_usu.place(x=68, y=243, width=680, height=43)
+        self.cb_cargo.place(x=68, y=327, width=680, height=43)
+        self.cb_setor.place(x=68, y=412, width=680, height=43)
+        self.cb_nivel_acesso.place(x=68, y=497, width=215, height=43)
+        self.lb_senha.place(x=316, y=497, width=215, height=43)
+
+        self.btn_inserir_usu =Button(self.root,
+                                 text='INSERIR', 
+                                 font=FONT_INIT, 
+                                 bg='#676AA9', 
+                                 fg='#ffffff',
+                                 justify='center',
+                                 cursor='hand2',
+                                 command=lambda:self.inserir_usuario()
+
+                                  )
+
+        self.btn_delete_usu =Button(self.root,
+                                 text='DELETAR', 
+                                 font=FONT_INIT, 
+                                 bg='#676AA9', 
+                                 fg='#ffffff',
+                                 justify='center',
+                                 cursor='hand2',
+                                 command=lambda:self.deleta_usuario()
+
+                                  )
+
+        self.btn_update_usu =Button(self.root,
+                                 text='ATUALIZAR', 
+                                 font=FONT_INIT, 
+                                 bg='#676AA9', 
+                                 fg='#ffffff',
+                                 justify='center',
+                                 cursor='hand2',
+                                 command=lambda:self.atualiza_usuario()
+
+                                  )
+
+        self.btn_reset_senha =Button(self.root,
+                                 text='Resetar Senha', 
+                                 font=FONT_INIT_TXT_AREA, 
+                                 bg='#676AA9', 
+                                 fg='#ffffff',
+                                 justify='center',
+                                 cursor='hand2',
+                                 command=lambda:self.resetar_senha_usuario()
+
+                                  )
+
+        self.btn_inserir_usu.place(x=94, y=627, width=169, height=51)
+        self.btn_delete_usu.place(x=298, y=627, width=169, height=51)
+        self.btn_update_usu.place(x=502, y=627, width=169, height=51)
+        self.btn_reset_senha.place(x=555, y=499, width=195, height=45)
+
+
+        self.scroll_usu = Scrollbar(self.root)
+        self.tr_vw_usuarios = ttk.Treeview(self.root,columns=['id','usuario', 'cargo', 'nivel_acesso'], show='headings', yscrollcommand=self.scroll_usu.set)
+        self.tr_vw_usuarios.bind('<Double-1>', self.duplo_click_tabela_usuarios)
+        self.scroll_usu.config(command=self.tr_vw_usuarios.yview)
+
+        self.tr_vw_usuarios.column('id',width=0)
+        self.tr_vw_usuarios.column('usuario',width=300)
+        self.tr_vw_usuarios.column('cargo',width=100)
+        self.tr_vw_usuarios.column('nivel_acesso',width=100)
+
+        self.tr_vw_usuarios.heading('id', text='ID')
+        self.tr_vw_usuarios.heading('usuario', text='USUARIO')
+        self.tr_vw_usuarios.heading('cargo', text='CARGO')
+        self.tr_vw_usuarios.heading('nivel_acesso', text='NIVEL_ACESSO')
+
+        self.tr_vw_usuarios.place(x=791, y=122, width=568, height=599)
+        self.scroll_usu.place(x=1360, y=123, width=29, height=599)
         
+
+
+        self.style_treeview()
+        self.popular_tabela_usuario()
+
     def inserir_produto_massivo(self, dados: str):
 
         # dados = self.txtArea_produtos.get("1.0","end - 1c")
@@ -867,8 +991,7 @@ class TelaPrincipal:
                 [self.txtArea_produtos.insert(END, erro) for erro in erros]
                 # self.txtArea_produtos.insert(END, erro)
                 messagebox.showerror('Erro dados', 'Dados com formato incorreto, verifique e tente novamente.')
-
-                    
+                  
     def insert_produto(self, listaDados: list):
         if len(listaDados)> 0:
             try:
@@ -888,8 +1011,7 @@ class TelaPrincipal:
         self.root.geometry("%dx%d+%d+%d" % (p[0],p[1],p[2],p[3]))
 
         #tela inicial:
-        self.componentes_produtos()
-
+        self.componentes_login_usuario()
 
 
 
@@ -1183,12 +1305,10 @@ class TelaPrincipal:
                 produto,
                 descricao,
                 categoria 
-                FROM tb_produtos WHERE {} LIKE '{}%'
+                FROM tb_produtos WHERE {} LIKE '%{}%'
                 ORDER BY id DESC """.format(n_tipo, proc)
 
-            print(sql)
             dados = self.select_dados_produtos(sql)
-            print(dados)
             self.popular_tabela_produtos(dados)
 
     #ações
@@ -1204,7 +1324,158 @@ class TelaPrincipal:
                 self.txt_cd_descri_produto.insert(END, col3)
                 self.cbx_cd_categoria_produto.insert(END, col4)
         
+    #USUARIOS
+    def variaveis_usuarios(self):
+        self.v_matric_usu = self.var_matricula.get()
+        self.v_nome_usu =self.var_nome_usu.get()
+        self.v_cargo_usu =self.var_cargo.get()
+        self.v_setor_usu =self.var_setor.get()
+        self.v_nivel_usu =self.var_nivel_acesso.get()
+        self.v_senha_usu =self.var_senha.get()
+        try:
+            valores = self.selecao_item_usuario()
+            self.id_usu = valores[0]
+        except:
+            pass
 
-            
+    def limpa_campos_usuarios(self):
+            self.txt_matricula.delete(0, END)
+            self.txt_nome_usu.delete(0, END)
+            self.var_senha.set('')
+            self.cb_cargo.set('')
+            self.cb_setor.set('')
+            self.cb_nivel_acesso.set('')
+
+    def duplo_click_tabela_usuarios(self, event):
+            self.cb_setor.config(state='normal')
+            self.cb_cargo.config(state='normal')
+            self.cb_nivel_acesso.config(state='normal')
+            self.tr_vw_usuarios.selection()
+            self.limpa_campos_usuarios()
+
+
+            for n in self.tr_vw_usuarios.selection():
+                col1, col2, col3, col4 = self.tr_vw_usuarios.item(n, 'values')
+                valores = self.select_usuario(col1)
+                self.txt_matricula.insert(END, valores[0][1])
+                self.txt_nome_usu.insert(END, valores[0][2])
+                self.cb_cargo.insert(END, valores[0][3])
+                self.cb_setor.insert(END, valores[0][4])
+                self.cb_nivel_acesso.insert(END, valores[0][5])
+                self.var_senha.set(self.oculta_senha(valores[0][6])) 
+            self.cb_setor.config(state='readonly')
+            self.cb_cargo.config(state='readonly')
+            self.cb_nivel_acesso.config(state='readonly')
+
+    def selecao_item_usuario(self):
+        item = self.tr_vw_usuarios.selection()[0]
+        valores = self.tr_vw_usuarios.item(item, 'values')
+        return valores  
+
+    def inserir_usuario(self):
+
+        self.variaveis_usuarios()
+        bd = DataBase(2)
+        sql = """INSERT INTO tb_usuarios VALUES(?,?,?,?,?,?,?)"""
+        bd.insert(sql,[(None,
+                        self.v_matric_usu, 
+                        self.v_nome_usu.upper(), 
+                        self.v_cargo_usu, 
+                        self.v_setor_usu, 
+                        self.v_nivel_usu,
+                        'validade1')]
+                        )
+        self.popular_tabela_usuario()
+        self.limpa_campos_usuarios()
+
+    def deleta_usuario(self):
+        valores =  self.selecao_item_usuario()
+        bd = DataBase(2)
+        sql = f"""DELETE FROM tb_usuarios WHERE id = {valores[0]}"""
+        bd.delete(sql)
+        self.popular_tabela_usuario()
+        self.limpa_campos_usuarios()
+
+    def atualiza_usuario(self):
+        self.variaveis_usuarios()
+        dados = ( self.v_matric_usu,
+                self.v_nome_usu, 
+                self.v_cargo_usu, 
+                self.v_setor_usu, 
+                self.v_nivel_usu,
+                self.v_senha_usu,
+                self.id_usu)
+
+        valid = [True if value != '' else False for value in dados]
+        print(valid)
+        if False not in valid:
+            db = DataBase(2)
+            sql = """UPDATE tb_usuarios SET matricula = '{}', 
+                        usuario = '{}', cargo = '{}', setor = '{}', 
+                        acesso = '{}', senha = '{}' WHERE id = {}
+                """.format(self.v_matric_usu,
+                            self.v_nome_usu.upper(), 
+                            self.v_cargo_usu, 
+                            self.v_setor_usu, 
+                            self.v_nivel_usu,
+                            self.v_senha_usu,
+                            self.id_usu
+                )
+            db.update(sql)
+            self.popular_tabela_usuario()
+            self.limpa_campos_usuarios()
+
+    def select_usuario(self, id:int):
+        bd = DataBase(2)
+        sql = """SELECT * FROM tb_usuarios WHERE id = {}""".format(id)
+        valores = bd.selectAll(sql)
+        return valores
+
+    def popular_tabela_usuario(self, lista_dados: list =[]): 
+        if lista_dados:
+            dados_prod = lista_dados
+        else:
+            dados_prod = self.select_dados_usuarios()
+
+        self.tr_vw_usuarios.delete(*self.tr_vw_usuarios.get_children())
+        try:
+            for dados in dados_prod:
+                self.tr_vw_usuarios.insert('','end',values=dados)
+        except:
+            pass
+
+    def select_dados_usuarios(self, sqlString:str =''):
+        if sqlString:
+            sql = sqlString
+        else:
+            sql =""" SELECT 
+                id,
+                usuario,
+                cargo,
+                acesso 
+            FROM tb_usuarios ORDER BY id DESC """
+
+        
+        try:
+            bd = DataBase(2)
+            self.dados_produtos = bd.selectAll(sql)
+            return self.dados_produtos
+        except:
+            messagebox.showerror('Erro de dados','Não foi possivel carregar os dados do produto')
+            return
+
+    def resetar_senha_usuario(self):
+
+        self.variaveis_usuarios()
+        db = DataBase(2)
+        sql = """UPDATE tb_usuarios SET senha = '{}' WHERE id = {}""".format('validade1', self.id_usu)
+        db.update(sql)
+        self.popular_tabela_usuario()
+        self.limpa_campos_usuarios()
+
+    def oculta_senha(self, senha:str):
+        cript_senha = "".join(['•' for letra in senha])
+        return cript_senha
+
 if __name__ == '__main__':
     TelaPrincipal()
