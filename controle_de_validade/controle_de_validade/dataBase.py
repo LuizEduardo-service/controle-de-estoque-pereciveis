@@ -18,8 +18,6 @@ class DataBase:
         except:
             return False
 
-
-
     def connect_data_base(self, tipo: int):
         try:
 
