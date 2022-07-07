@@ -6,7 +6,7 @@ from tkinter import ttk
 from tkinter import messagebox
 from tkinter.filedialog import askdirectory
 import easygui
-from numpy import True_, short
+from numpy import False_, True_, short
 from tkcalendar import DateEntry
 from datetime import date, datetime
 from controle_de_validade.layout_pdf import Relatorios
@@ -22,9 +22,20 @@ FONT_INIT_TXT_AREA =('Poppins', 10)
 BT_COLOR = '#676AA9'
 BT_COLOR_PRESS = '#888AC1'
 
-class TelaPrincipal:
+class validadorEntradas:
+    def valida_matricula(self, text):
+        if text == '': return True
+        try:
+            value = int(text)
+        except ValueError:
+            return False
+        return 0 <= value <= 10000000
+
+class TelaPrincipal(validadorEntradas):
 
     def __init__(self) -> None:
+        self.root = root
+        self.valida_entradas()
         self.info_usuario = {}
         self.usuario_logado = ''
         self.matricula_logado = ''
@@ -34,10 +45,34 @@ class TelaPrincipal:
         self.diretorio_bd = ''
         self.valor_rec_minimo = 0
         self.valor_ale_comercial = 0
-        self.root = root
+        self.lista_valida_comp_tela_inicial: list = []
+        self.lista_valida_comp_config: list = []
+        self.lista_valida_comp_produtos: list = []
+        self.lista_valida_comp_usuario: list = []
         self.data_recebimento = datetime.now().date()
-        self.tela()
+        self.start()
         self.root.mainloop()
+
+    def start(self):
+        self.tela()
+
+    def valida_entradas(self):
+        self.campo_matricula = (self.root.register(self.valida_matricula),'%P')
+
+    def valida_campos_vazios(self, lista_campos: list):
+
+        campo_validado = False
+        for campo in lista_campos:
+            if(len(campo.get())==0):
+                campo_validado = True
+                break
+
+        if campo_validado ==True:
+            messagebox.showerror('Campos Vazios', 'Existem campos em branco\nVerifique os dados e tente novamente')
+            return False
+
+        return True
+                
 
     def centralizacao_tela(self,largura, altura,root):
         param = []
@@ -102,14 +137,14 @@ class TelaPrincipal:
         except:
             messagebox.showerror('Erro consulta', 'Não foi possivel conectar ao banco de  dados, por favor verifique a conexão.')
            
-    def define_alerta_comercial(self,dta_venc, dta_fab, percent):
+    def define_alerta_comercial(self, dta_venc, dta_fab, percent):
         """ define a data do alerta comercial"""
         data_final = dta_venc - ((dta_venc - dta_fab) * (percent/100))
 
         # return format(data_final,'%d/%m/%Y')
         return data_final
 
-    def define_minimo_recebimento(self,dta_venc, dta_fab, percent):
+    def define_minimo_recebimento(self, dta_venc, dta_fab, percent):
         """Define a data minima para recebimento do produto"""
         data_final = dta_venc - ((dta_venc - dta_fab) * (percent/100))
         # return format(data_final,'%d/%m/%Y')
@@ -125,8 +160,8 @@ class TelaPrincipal:
         self.alerta_comercial_v = self.a_comercial
         self.dta_recebimento_v = self.data_recebimento
         self.hra_recebimento_v = time.strftime('%H:%M')
-        self.usuario_v = self.usuario_logado
-        self.matricula_v = self.matricula_logado
+        self.usuario_v = self.formata_nome_usuario( self.info_usuario['usuario'])
+        self.matricula_v = self.info_usuario['matricula']
         self.receber_v = self.btReceber.get()
 
     def relogio(self):
@@ -153,76 +188,83 @@ class TelaPrincipal:
 
             )
             gerarPdf.gerar_relatorio()
-            
+
+    def logoff(self):
+        self.info_usuario = {}
+        self.componentes_login_usuario()
+
     def executa_calculos(self):
-        self.status_recebimento: str = ''
-        self.data_fab = self.dta_fab.get_date()
-        self.data_venc = self.dta_venc.get_date()
-        self.r_minimo = self.define_minimo_recebimento(self.data_venc, self.data_fab, self.valor_rec_minimo)
-        self.a_comercial = self.define_alerta_comercial(self.data_venc, self.data_fab, self.valor_ale_comercial)
-        status_rec = self.btReceber.get()
+        
+            self.status_recebimento: str = ''
+            self.data_fab = self.dta_fab.get_date()
+            self.data_venc = self.dta_venc.get_date()
+            self.r_minimo = self.define_minimo_recebimento(self.data_venc, self.data_fab, self.valor_rec_minimo)
+            self.a_comercial = self.define_alerta_comercial(self.data_venc, self.data_fab, self.valor_ale_comercial)
+            status_rec = self.btReceber.get()
 
+        
+            if self.data_fab >= self.data_venc:
+                self.btReceber.set('DATA DE FABRICAÇÃO MAIOR OU IGUAL AO VENCIMENTO')
+                self.bt_receber.configure(bg='#FA8072')
+                self.rec_minimo.set('')
+                self.alerta_comercial.set('')
+                
 
-        if self.data_fab >= self.data_venc:
-            self.btReceber.set('DATA DE FABRICAÇÃO MAIOR OU IGUAL AO VENCIMENTO')
-            self.bt_receber.configure(bg='#FA8072')
-            self.rec_minimo.set('')
-            self.alerta_comercial.set('')
-            
+            elif  self.r_minimo >= datetime.now().date():
+                
+                self.btReceber.set('PRODUTO LIBERADO PARA RECEBIMENTO')
+                self.bt_receber.configure(bg='#3CB371')
+                self.rec_minimo.set(self.convert_data_str(self.r_minimo))
+                self.alerta_comercial.set(self.convert_data_str(self.a_comercial))
+                # self.limpa_campos()
+                
 
-        elif  self.r_minimo >= datetime.now().date():
-            self.btReceber.set('PRODUTO LIBERADO PARA RECEBIMENTO')
-            self.bt_receber.configure(bg='#3CB371')
-            self.rec_minimo.set(self.convert_data_str(self.r_minimo))
-            self.alerta_comercial.set(self.convert_data_str(self.a_comercial))
-            # self.limpa_campos()
-            
-
-        else:
-            self.btReceber.set('PRODUTO NÃO LIBERADO PARA RECEBIMENTO')
-            self.bt_receber.configure(bg='#FA8072')
-            self.rec_minimo.set(self.convert_data_str(self.r_minimo))
-            self.alerta_comercial.set(self.convert_data_str(self.a_comercial))
-            # self.rec_minimo.set('')
-            # self.alerta_comercial.set('')
-            
-
-        status_rec_validado = self.btReceber.get()
-
-        if status_rec == 'PRODUTO LIBERADO PARA RECEBIMENTO' and status_rec_validado == 'PRODUTO LIBERADO PARA RECEBIMENTO':
-            self.status_recebimento = 'RECEBIDO'
-            self.insere_registros_rec()
-            # self.gerar_pdf()
-            self.select_dados_rec()
-            self.txt_produto.focus()
-            self.limpa_campos(1)
-            self.btReceber.set('RECEBIMENTO FINALIZADO')
-            self.configura_btn_receber()
-
-        elif status_rec == 'PRODUTO NÃO LIBERADO PARA RECEBIMENTO' and status_rec_validado == 'PRODUTO NÃO LIBERADO PARA RECEBIMENTO':
-            opc = messagebox.askyesnocancel("Recebimento de Mercadoria", 
-                                            'Mercadoria não esta nos parametros de recebimento.\nContinuar recebimento?')
-            if opc:
-                messagebox.showinfo('Recebimento','Produto recebido!')
-                self.status_recebimento = 'RECEBIDO'
-                self.insere_registros_rec()
-                self.select_dados_rec()
-                self.txt_produto.focus()
-                self.limpa_campos(1)
-                self.btReceber.set('RECEBIMENTO FINALIZADO')
-                self.configura_btn_receber()
-
-            elif opc is None:
-                pass
             else:
-                messagebox.showerror('Recebimento','Produto não recebido!')
-                self.limpa_campos(1)
-                self.txt_produto.focus()
-                self.status_recebimento = ' NÃO RECEBIDO'
-                self.configura_btn_receber()
-        else:
-            pass
+                self.btReceber.set('PRODUTO NÃO LIBERADO PARA RECEBIMENTO')
+                self.bt_receber.configure(bg='#FA8072')
+                self.rec_minimo.set(self.convert_data_str(self.r_minimo))
+                self.alerta_comercial.set(self.convert_data_str(self.a_comercial))
+                # self.rec_minimo.set('')
+                # self.alerta_comercial.set('')
+                
 
+            status_rec_validado = self.btReceber.get()
+
+            if status_rec == 'PRODUTO LIBERADO PARA RECEBIMENTO' and status_rec_validado == 'PRODUTO LIBERADO PARA RECEBIMENTO':
+                if self.valida_campos_vazios(self.lista_valida_comp_tela_inicial):
+                    self.status_recebimento = 'RECEBIDO'
+                    self.insere_registros_rec()
+                    self.gerar_pdf()
+                    self.select_dados_rec()
+                    self.txt_produto.focus()
+                    self.limpa_campos(1)
+                    self.btReceber.set('RECEBIMENTO FINALIZADO')
+                    self.configura_btn_receber()
+
+            elif status_rec == 'PRODUTO NÃO LIBERADO PARA RECEBIMENTO' and status_rec_validado == 'PRODUTO NÃO LIBERADO PARA RECEBIMENTO':
+                opc = messagebox.askyesnocancel("Recebimento de Mercadoria", 
+                                                'Mercadoria não esta nos parametros de recebimento.\nContinuar recebimento?')
+                if opc:
+                    if self.valida_campos_vazios(self.lista_valida_comp_tela_inicial):
+                        messagebox.showinfo('Recebimento','Produto recebido!')
+                        self.status_recebimento = 'RECEBIDO'
+                        self.insere_registros_rec()
+                        self.select_dados_rec()
+                        self.txt_produto.focus()
+                        self.limpa_campos(1)
+                        self.btReceber.set('RECEBIMENTO FINALIZADO')
+                        self.configura_btn_receber()
+
+                elif opc is None:
+                    pass
+                else:
+                    messagebox.showerror('Recebimento','Produto não recebido!')
+                    self.limpa_campos(1)
+                    self.txt_produto.focus()
+                    self.status_recebimento = ' NÃO RECEBIDO'
+                    self.configura_btn_receber()
+            else:
+                pass
 
     def define_diretorio(self, tipo: str) -> str:
             diretorio = easygui.diropenbox()
@@ -246,6 +288,7 @@ class TelaPrincipal:
 
     def componentes_tela_inicial(self):
         self.destroi_widget()
+        self.lista_valida_comp_tela_inicial = []
         self.carrega_dados_config()
         self.imagem_tela = PhotoImage(file=r'..\image\tela1.png')
         self.imagem_pesquisa = PhotoImage(file=r'..\image\pesquisar.png',width=64,height=30)
@@ -255,8 +298,8 @@ class TelaPrincipal:
         lb_image.place(x=0, y=0)
 
         # relogio
-        self.relogio_h = Label(self.root, font=FONT_INIT)
-        self.relogio_h.place(x=683, y=92, width=169, height=43)
+        self.relogio_h = Label(self.root, font=FONT_INIT,bg='#ffffff')
+        self.relogio_h.place(x=1254, y=164, width=122, height=24)
         self.relogio()
 
        #label data
@@ -272,6 +315,8 @@ class TelaPrincipal:
 
         self.dta_fab.place(x=60, y=263, width=307, height=43)
         self.dta_venc.place(x=399, y=263, width=307, height=43)
+        self.lista_valida_comp_tela_inicial.append(self.dta_fab)
+        self.lista_valida_comp_tela_inicial.append(self.dta_venc)
         self.dta_fab._set_text('')
         self.dta_venc._set_text('')
 
@@ -311,6 +356,7 @@ class TelaPrincipal:
 
         self.txt_produto.place(x=60, y=79,width=197,height=43)
         self.numSku.set('')
+        self.lista_valida_comp_tela_inicial.append(self.txt_produto)
 
         #label
         self.dta_recebimento = StringVar()
@@ -322,8 +368,8 @@ class TelaPrincipal:
         self.l_matricula = StringVar()
         self.msg = StringVar()
 
-        self.l_usuario.set(self.usuario_logado)
-        self.l_matricula.set(self.matricula_logado)
+        self.l_usuario.set(self.formata_nome_usuario(self.info_usuario['usuario']))
+        self.l_matricula.set(self.info_usuario['matricula'])
 
 
         self.lb_rec_minimo = Label(self.root,
@@ -353,9 +399,10 @@ class TelaPrincipal:
                                         bg='#ffffff')
 
         self.lb_usuario =Label(self.root,
-                                text='Usuario: ' + self.usuario_logado,
-                                font=('Poppins', 15),  
-                                justify='center',
+
+                                font=('Poppins', 12),  
+                                # justify='left',
+                                compound=LEFT,
                                 bg='#ffffff',
                                 textvariable=self.l_usuario)
 
@@ -372,13 +419,15 @@ class TelaPrincipal:
                             justify='center',
                             bg="#ffffff")
 
+
+
         self.lb_rec_minimo.place(x=740, y=263, width=307, height=43)
         self.lb_alerta_comercial.place(x=1081, y=263, width=307, height=43)
         self.lb_descri_produto.place(x=60, y=171, width=680, height=43)
         self.lb_categoria.place(x=770, y=171, width=288, height=43)
-        self.lb_dta_recebimento.place(x=1197, y=140,width=211, height=37)
-        self.lb_usuario.place(x=1177, y=64, width=251, height=37)
-        self.lb_matricula.place(x=1179, y=99, width=251, height=37)
+        self.lb_dta_recebimento.place(x=1167, y=122,width=211, height=39)
+        self.lb_usuario.place(x=1212, y=77, width=164, height=26)
+        # self.lb_matricula.place(x=1179, y=99, width=251, height=37)
         self.lb_msg.place(x=345, y=80, width=554, height=43)
 
         #tabela
@@ -426,8 +475,24 @@ class TelaPrincipal:
         self.select_dados_rec()
         self.style_treeview()
 
+    def formata_nome_usuario(self, nome: str):
+
+        if nome:
+            separa_nome = nome.split(' ')
+            primeiro_nome = separa_nome[0]
+            ultimo_nome = separa_nome[-1]
+
+            if primeiro_nome == ultimo_nome: return primeiro_nome
+
+            nome_formatado = primeiro_nome + '.' + ultimo_nome
+
+            return nome_formatado
+        else:
+            return 'DESCONHECIDO'
+
     def componentes_tela_config(self):
         self.destroi_widget()
+        self.lista_valida_comp_config = []
         self.image_config = PhotoImage(file=r'../image/config.png')
         self.lb_img_config = Label(self.root,image=self.image_config)
         self.lb_img_config.place(x=0, y=0)
@@ -460,6 +525,10 @@ class TelaPrincipal:
         self.txt_dir_bd.place(x=70, y=186, width=826, height=30)
         self.txt_nome_pdf.place(x=70, y=265, width=826, height=30)
         self.txt_nome_relatorio.place(x=70, y=344, width=826, height=30)
+
+        self.lista_valida_comp_config.append(self.txt_dir_bd)
+        self.lista_valida_comp_config.append(self.txt_nome_pdf)
+        self.lista_valida_comp_config.append(self.txt_nome_relatorio)
 
 
 
@@ -537,10 +606,18 @@ class TelaPrincipal:
         self.nome_pdf.set(self.nome_saida_pdf)
         self.dir_bd.set(self.diretorio_bd)
 
+        if self.info_usuario['acesso'] == 'NIVEL 1':
+            self.sc_alert_comercial.config(state='disabled')
+            self.sc_rec_minimo.config(state='disabled')
+            self.txt_dir_bd.config(state='disabled')
+            self.btn_dir_bd.config(state='disabled')
+
     def componentes_menu_bar(self):
+
         self.menubar = Menu(self.root)
         self.menu = Menu(self.menubar)
         self.menuBd = Menu(self.menubar)
+        self.menuSair = Menu(self.menubar)
 
         self.menubar.add_command(label='Inicio',command=self.componentes_tela_inicial)
         self.menubar.add_command(label='Configurações',command=self.componentes_tela_config)
@@ -549,6 +626,10 @@ class TelaPrincipal:
         self.menubar.add_cascade(label='Banco', menu=self.menuBd)
         self.menuBd.add_command(label='Produtos', command=self.componentes_produtos)
         self.menuBd.add_command(label='Usuario', command=lambda:self.componentes_usuarios(nivelAcesso=self.info_usuario['acesso']))
+
+        self.menubar.add_cascade(label='Sair', menu=self.menuSair)
+        self.menuSair.add_command(label='Logoff', command=self.logoff)
+        self.menuSair.add_command(label='Fechar Aplicação', command=lambda:self.root.destroy())
 
         self.root.config(menu=self.menubar)
 
@@ -565,6 +646,8 @@ class TelaPrincipal:
                                 bg='#ffffff',
                                 justify='center',
                                 border=False,
+                                validate='key',
+                                validatecommand=self.campo_matricula,
                                 textvariable=self.lg_usuario)
 
         self.txt_senha = Entry(self.root,
@@ -592,7 +675,7 @@ class TelaPrincipal:
         self.btn_entrar.place(x=976, y=586, width=243, height=51)
 
     def componentes_cadastro_usuario(self):
-        self.destroi_widget()        
+        self.destroi_widget()     
         self.image_cad_login = PhotoImage(file=r'../image/cadastroLogin.png')
         self.lb_cad_login = Label(self.root,image=self.image_cad_login)
         self.lb_cad_login.place(x=0, y=0)
@@ -606,6 +689,8 @@ class TelaPrincipal:
                                 bg='#ffffff',
                                 justify='center',
                                 border=False,
+                                validate='key',
+                                validatecommand=self.campo_matricula,
                                 textvariable=self.lg_cad_usuario)
 
         self.txt_cad_senha = Entry(self.root,
@@ -642,6 +727,7 @@ class TelaPrincipal:
         self.btn_cad_entrar.place(x=983, y=590, width=230, height=40)
         
     def componentes_historico(self):
+        self.destroi_widget()
         self.imagem_historico = PhotoImage(file=r'..\image\historico.png')
         self.imagem_excel = PhotoImage(file=r'..\image\b_excel.png')
         self.imagem_ficha = PhotoImage(file=r'..\image\g_ficha.png')
@@ -764,7 +850,7 @@ class TelaPrincipal:
 
     def componentes_produtos(self):
         self.destroi_widget()
-
+        self.lista_valida_comp_produtos = []
         bd =DataBase(2)
         sql="SELECT categoria FROM tb_categoria ORDER BY categoria ASC"
         lista = bd.selectAll(sql)
@@ -796,6 +882,10 @@ class TelaPrincipal:
                                                      
                                                             
         )
+       
+        self.lista_valida_comp_produtos.append(self.txt_cd_produto)
+        self.lista_valida_comp_produtos.append(self.txt_cd_descri_produto)
+        self.lista_valida_comp_produtos.append(self.cbx_cd_categoria_produto)
 
         self.cbx_cd_filtro = ttk.Combobox(self.root,
                                          font= FONT_INIT,
@@ -891,8 +981,14 @@ class TelaPrincipal:
         self.style_treeview()
         self.popular_tabela_produtos()
 
+        if self.info_usuario['acesso'] == 'NIVEL 1':
+            self.btn_inserir.config(state='disabled')
+            self.btn_update.config(state='disabled')
+            self.btn_delete.config(state='disabled')
+
     def componentes_usuarios(self, primeiro_acesso:bool = True, nivelAcesso: str = 'NIVEL 2'):
         self.destroi_widget()
+        self.lista_valida_comp_usuario = []
         if primeiro_acesso:
             self.componentes_menu_bar()
 
@@ -911,6 +1007,8 @@ class TelaPrincipal:
 
         self.txt_matricula = Entry(self.root, 
                                     font=FONT_INIT, 
+                                    validate='key',
+                                    validatecommand=self.campo_matricula,
                                     textvariable=self.var_matricula)
 
         self.txt_nome_usu = Entry(self.root, 
@@ -944,6 +1042,12 @@ class TelaPrincipal:
                                 show='•',
                                 textvariable=self.var_senha)
 
+        self.lista_valida_comp_usuario.append(self.txt_matricula)
+        self.lista_valida_comp_usuario.append(self.txt_nome_usu)
+        self.lista_valida_comp_usuario.append(self.cb_cargo)
+        self.lista_valida_comp_usuario.append(self.cb_setor)
+        self.lista_valida_comp_usuario.append(self.cb_nivel_acesso)
+        self.lista_valida_comp_usuario.append(self.lb_senha)
 
         self.cb_cargo.set('')
         self.cb_setor.set('')
@@ -1076,9 +1180,8 @@ class TelaPrincipal:
             valores = self.select_usuario(self.info_usuario['id'])
             self.popular_tabela_usuario(valores)
             
-
     def componentes_primeiro_acesso(self):
-
+        self.destroi_widget()
         self.imagem_acesso = PhotoImage(file=r'..\image\p_acesso.png')
         lb_image = Label(self.root,image=self.imagem_acesso)
         lb_image.place(x=0, y=0)
@@ -1156,11 +1259,11 @@ class TelaPrincipal:
         p = self.centralizacao_tela(1440,750,self.root)
         self.root.geometry("%dx%d+%d+%d" % (p[0],p[1],p[2],p[3]))
 
-
-        #tela inicial:
-        self.componentes_login_usuario()
-
-
+        if self.validando_primeiro_acesso():
+            self.componentes_primeiro_acesso()
+            self.info_usuario['acesso'] = 'NIVEL 2'
+        else:
+            self.componentes_login_usuario()
 
     def insere_registros_rec(self):
         self.variaveis_tela_inicial()
@@ -1356,19 +1459,21 @@ class TelaPrincipal:
                 scl_alert_comercial = lista_acesso[3]
                 scl_rec_minimo = lista_acesso[4]
             else:
+
                 nome_relatorio = self.nome_relatorio.get()
                 nome_pdf = self.nome_pdf.get()
                 dir_bd = self.dir_bd.get()    
                 scl_alert_comercial = self.scl_alert_comercial.get()
                 scl_rec_minimo = self.scl_rec_minimo.get()
 
-            sql = """UPDATE tb_config SET dir_bd = '{}', nome_pdf = '{}', nome_rel = '{}' WHERE id = 1
-                    """.format(dir_bd, nome_pdf, nome_relatorio)
-            bd = DataBase(1)
-            bd.update(sql)
+            if self.valida_campos_vazios(self.lista_valida_comp_config) or len(lista_acesso)> 0:
+                sql = """UPDATE tb_config SET dir_bd = '{}', nome_pdf = '{}', nome_rel = '{}' WHERE id = 1
+                        """.format(dir_bd, nome_pdf, nome_relatorio)
+                bd = DataBase(1)
+                bd.update(sql)
 
-            if scl_rec_minimo>= scl_alert_comercial:
-                messagebox.showwarning('Erro de Periodo','Recebimento minimo maior que alerta Comercial.')
+            if scl_rec_minimo <= scl_alert_comercial:
+                messagebox.showwarning('Erro de Periodo','Recebimento minimo menor que alerta Comercial.')
             elif scl_rec_minimo == 0 or scl_alert_comercial == 0:
                 messagebox.showwarning('Erro de Periodo','Defina valores Maiores que 0.')
             else:
@@ -1401,28 +1506,30 @@ class TelaPrincipal:
         self.estilo_treeview.theme_use('clam')
 
     def delete_produtos(self):
-        valores =  self.selecao_item_produto()
-        bd = DataBase(2)
-        sql = f"""DELETE FROM tb_produtos WHERE id = {valores[0]}"""
-        bd.delete(sql)
-        self.popular_tabela_produtos()
+        if self.valida_campos_vazios(self.lista_valida_comp_produtos):
+            valores =  self.selecao_item_produto()
+            bd = DataBase(2)
+            sql = f"""DELETE FROM tb_produtos WHERE id = {valores[0]}"""
+            bd.delete(sql)
+            self.popular_tabela_produtos()
 
     def update_produtos(self):
         dados = (self.id_produto, self.txt_cd_produto.get(), self.txt_cd_descri_produto.get(), self.cbx_cd_categoria_produto.get())
         valid = [True if value != '' else False for value in dados]
         if False not in valid:
-            db = DataBase(2)
-            sql = """UPDATE tb_produtos SET produto = '{}', 
-                        descricao = '{}', categoria = '{}' WHERE id = {}
-                """.format(self.txt_cd_produto.get(), 
-                           self.txt_cd_descri_produto.get(), 
-                           self.cbx_cd_categoria_produto.get(),
-                           self.id_produto)
-            db.update(sql)
-            self.popular_tabela_produtos()
-            self.txt_cd_produto.delete(0, END)
-            self.txt_cd_descri_produto.delete(0, END)
-            self.cbx_cd_categoria_produto.delete(0, END)
+            if self.valida_campos_vazios(self.lista_valida_comp_produtos):
+                db = DataBase(2)
+                sql = """UPDATE tb_produtos SET produto = '{}', 
+                            descricao = '{}', categoria = '{}' WHERE id = {}
+                    """.format(self.txt_cd_produto.get(), 
+                            self.txt_cd_descri_produto.get(), 
+                            self.cbx_cd_categoria_produto.get(),
+                            self.id_produto)
+                db.update(sql)
+                self.popular_tabela_produtos()
+                self.txt_cd_produto.delete(0, END)
+                self.txt_cd_descri_produto.delete(0, END)
+                self.cbx_cd_categoria_produto.delete(0, END)
 
     def insert_produtos(self):
         lista: list = []
@@ -1431,12 +1538,13 @@ class TelaPrincipal:
         dados_massivo = self.txtArea_produtos.get("1.0","end - 1c")
 
         if False not in valid:
-            lista.append(dados) 
-            db=DataBase(2)
-            sql="""INSERT INTO tb_produtos VALUES(?,?,?,?)"""
-            db.insert(sql, lista)
-            self.popular_tabela_produtos()
-            # messagebox.showwarning('Erro Dados', 'Verifique os dados e tente novamente.')
+            if self.valida_campos_vazios(self.lista_valida_comp_produtos):
+                lista.append(dados) 
+                db=DataBase(2)
+                sql="""INSERT INTO tb_produtos VALUES(?,?,?,?)"""
+                db.insert(sql, lista)
+                self.popular_tabela_produtos()
+                # messagebox.showwarning('Erro Dados', 'Verifique os dados e tente novamente.')
 
         if dados_massivo:
             self.inserir_produto_massivo(dados= dados_massivo)
@@ -1544,65 +1652,75 @@ class TelaPrincipal:
         return valores  
 
     def inserir_usuario(self, senhaPadrao: str = 'validade1'):
+        
+        if self.valida_campos_vazios(self.lista_valida_comp_usuario):
+            self.variaveis_usuarios()
+            bd = DataBase(2)
+            valid_sql = """SELECT matricula FROM tb_usuarios WHERE matricula = '{}'""".format(self.v_matric_usu)
+            resposta = bd.selectAll(valid_sql)
 
-        self.variaveis_usuarios()
-        bd = DataBase(2)
-        valid_sql = """SELECT matricula FROM tb_usuarios WHERE matricula = '{}'""".format(self.v_matric_usu)
-        resposta = bd.selectAll(valid_sql)
-        if resposta[0][0] == self.v_matric_usu:
-            messagebox.showwarning('Erro de Cadastro', 'Matricula ja cadastrada no Sistema!!\nVerifique os dados e tente novamente.')
-        else:
-            sql = """INSERT INTO tb_usuarios VALUES(?,?,?,?,?,?,?)"""
-            bd.insert(sql,[(None,
-                            self.v_matric_usu, 
-                            self.v_nome_usu.upper(), 
-                            self.v_cargo_usu, 
-                            self.v_setor_usu, 
-                            self.v_nivel_usu,
-                            senhaPadrao)]
-                            )
+            try:
+                n_resposta = resposta[0][0]
+            except IndexError:
+                n_resposta = 'novo_usuario'
+
+            if n_resposta == self.v_matric_usu:
+                messagebox.showwarning('Erro de Cadastro', 'Matricula ja cadastrada no Sistema!!\nVerifique os dados e tente novamente.')
+            else:
+                bd = DataBase(2)
+                sql = """INSERT INTO tb_usuarios VALUES(?,?,?,?,?,?,?)"""
+                bd.insert(sql,[(None,
+                                self.v_matric_usu, 
+                                self.v_nome_usu.upper(), 
+                                self.v_cargo_usu, 
+                                self.v_setor_usu, 
+                                self.v_nivel_usu,
+                                senhaPadrao)]
+                                )
+                self.popular_tabela_usuario()
+                self.limpa_campos_usuarios()
+
+    def deleta_usuario(self):
+        if self.valida_campos_vazios(self.lista_valida_comp_usuario):
+            valores =  self.selecao_item_usuario()
+            bd = DataBase(2)
+            sql = f"""DELETE FROM tb_usuarios WHERE id = {valores[0]}"""
+            bd.delete(sql)
             self.popular_tabela_usuario()
             self.limpa_campos_usuarios()
 
-    def deleta_usuario(self):
-        valores =  self.selecao_item_usuario()
-        bd = DataBase(2)
-        sql = f"""DELETE FROM tb_usuarios WHERE id = {valores[0]}"""
-        bd.delete(sql)
-        self.popular_tabela_usuario()
-        self.limpa_campos_usuarios()
-
     def atualiza_usuario(self):
-        self.variaveis_usuarios()
-        dados = ( self.v_matric_usu,
-                self.v_nome_usu, 
-                self.v_cargo_usu, 
-                self.v_setor_usu, 
-                self.v_nivel_usu,
-                self.v_senha_usu,
-                self.id_usu)
+        if self.valida_campos_vazios(self.lista_valida_comp_usuario):
+            self.variaveis_usuarios()
+            dados = ( self.v_matric_usu,
+                    self.v_nome_usu, 
+                    self.v_cargo_usu, 
+                    self.v_setor_usu, 
+                    self.v_nivel_usu,
+                    self.v_senha_usu,
+                    self.id_usu)
 
-        valid = [True if value != '' else False for value in dados]
-        if False not in valid:
-            db = DataBase(2)
-            sql = """UPDATE tb_usuarios SET matricula = '{}', 
-                        usuario = '{}', cargo = '{}', setor = '{}', 
-                        acesso = '{}', senha = '{}' WHERE id = {}
-                """.format(self.v_matric_usu,
-                            self.v_nome_usu.upper(), 
-                            self.v_cargo_usu, 
-                            self.v_setor_usu, 
-                            self.v_nivel_usu,
-                            self.v_senha_usu,
-                            self.id_usu
-                )
-            db.update(sql)
-            if self.info_usuario['acesso'] == 'NIVEL 1':
-                valores = self.select_usuario(self.info_usuario['id'])
-                self.popular_tabela_usuario(valores)
-            else:
-                self.popular_tabela_usuario()
-                self.limpa_campos_usuarios()
+            valid = [True if value != '' else False for value in dados]
+            if False not in valid:
+                db = DataBase(2)
+                sql = """UPDATE tb_usuarios SET matricula = '{}', 
+                            usuario = '{}', cargo = '{}', setor = '{}', 
+                            acesso = '{}', senha = '{}' WHERE id = {}
+                    """.format(self.v_matric_usu,
+                                self.v_nome_usu.upper(), 
+                                self.v_cargo_usu, 
+                                self.v_setor_usu, 
+                                self.v_nivel_usu,
+                                self.v_senha_usu,
+                                self.id_usu
+                    )
+                db.update(sql)
+                if self.info_usuario['acesso'] == 'NIVEL 1':
+                    valores = self.select_usuario(self.info_usuario['id'])
+                    self.popular_tabela_usuario(valores)
+                else:
+                    self.popular_tabela_usuario()
+                    self.limpa_campos_usuarios()
 
     def select_usuario(self, id:int):
         bd = DataBase(2)
@@ -1657,6 +1775,18 @@ class TelaPrincipal:
         return cript_senha
 
     # PRIMEIRO ACESSO USUARIO
+    def validando_primeiro_acesso(self):
+        try:
+            bd = DataBase(1)
+            sql = """SELECT valor FROM tb_primeiro_acesso"""
+            valores = bd.selectAll(sql)
+            if valores[0][0] == 0:
+                return True
+            return False 
+        except:
+            messagebox.showerror('Erro Banco', 'Não foi possivel conectar ao banco.')
+            return False 
+
     def dados_acesso_usuario(self, usuario: str, senha: str) -> list:
         print(usuario, senha, '==================================')
         bd = DataBase(2)
@@ -1686,7 +1816,9 @@ class TelaPrincipal:
                 caminho_dir = os.path.dirname(diretorio)
                 v_conexao = bd.teste_de_conexao(diretorio)
                 if v_conexao:
-                    lista_acesso = ['RELATÓRIO_REC', 'PDF', caminho_dir, 75, 25]
+                    sql = """SELECT r_minimo, a_comercial FROM tb_periodo_rec"""
+                    valores = bd.selectAll(sql)
+                    lista_acesso = ['RELATÓRIO_REC', 'PDF', caminho_dir, valores[0][0], valores[0][1]]
                     self.atualiza_dados_config(lista_acesso)
                     self.componentes_cadastro_usuario()
                 else:
@@ -1733,9 +1865,21 @@ class TelaPrincipal:
         if tipoAcesso == 1:
             resultado = self.validacao_senha(self.lg_cad_usuario.get(), self.lg_cad_senha.get(), self.lg_rept_senha.get())
             if resultado:
-                self.nova_senha = self.lg_cad_senha.get()
-                self.novo_matricula = self.lg_cad_usuario.get()
-                self.componentes_usuarios(False, nivelAcesso=self.acesso_logado)
+                n_valores = ''
+                try:
+                    sql = """SELECT matricula FROM tb_usuarios"""
+                    valores = self.select_dados_usuarios(sql)
+                    n_valores = valores[0][0]
+                except:
+                    n_valores = 'novo usuario'
+
+                # import ipdb; ipdb.set_trace()
+                if int(n_valores) != self.lg_cad_usuario.get():
+                    self.nova_senha = self.lg_cad_senha.get()
+                    self.novo_matricula = self.lg_cad_usuario.get()
+                    self.componentes_usuarios(False, nivelAcesso='NIVEL 2')
+                else:
+                    messagebox.showerror('Usuario Existente', 'Usuario ja Existe em nosso sistema!!\nVerifique os dados e tente novamente.')
 
         elif tipoAcesso == 2:
             resultado = self.validacao_senha(self.lg_usuario.get(), self.lg_senha.get(), self.lg_senha.get())
