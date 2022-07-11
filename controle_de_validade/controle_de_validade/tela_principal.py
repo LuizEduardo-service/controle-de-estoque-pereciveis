@@ -1,18 +1,17 @@
 import os
-import string
 from time import sleep
 from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
 from tkinter.filedialog import askdirectory
 import easygui
-from numpy import False_, True_, short
 from tkcalendar import DateEntry
 from datetime import date, datetime
 from controle_de_validade.layout_pdf import Relatorios
 from controle_de_validade.dataBase import DataBase
 import pandas as pd
 import time
+import babel.numbers
 
 
 
@@ -21,6 +20,7 @@ FONT_INIT =('Poppins', 15)
 FONT_INIT_TXT_AREA =('Poppins', 10)
 BT_COLOR = '#676AA9'
 BT_COLOR_PRESS = '#888AC1'
+
 
 class validadorEntradas:
     def valida_matricula(self, text):
@@ -35,7 +35,11 @@ class TelaPrincipal(validadorEntradas):
 
     def __init__(self) -> None:
         self.root = root
+        self.absolutepath = os.path.abspath(__file__)
+        self.fileDirectory = os.path.dirname(self.absolutepath)
+        self.imagens_layout()
         self.valida_entradas()
+        self.lista_campos()
         self.info_usuario = {}
         self.usuario_logado = ''
         self.matricula_logado = ''
@@ -45,16 +49,19 @@ class TelaPrincipal(validadorEntradas):
         self.diretorio_bd = ''
         self.valor_rec_minimo = 0
         self.valor_ale_comercial = 0
-        self.lista_valida_comp_tela_inicial: list = []
-        self.lista_valida_comp_config: list = []
-        self.lista_valida_comp_produtos: list = []
-        self.lista_valida_comp_usuario: list = []
         self.data_recebimento = datetime.now().date()
         self.start()
         self.root.mainloop()
 
     def start(self):
         self.tela()
+
+    def lista_campos(self):
+        self.lista_valida_comp_tela_inicial: list = []
+        self.lista_valida_comp_config: list = []
+        self.lista_valida_comp_produtos: list = []
+        self.lista_valida_comp_usuario: list = []
+        self.lista_valida_comp_historico: list = []
 
     def valida_entradas(self):
         self.campo_matricula = (self.root.register(self.valida_matricula),'%P')
@@ -73,11 +80,24 @@ class TelaPrincipal(validadorEntradas):
 
         return True
 
-    def widget_de_ajuda(self, tipo: int):
-        self.image_ajuda_alerta =  PhotoImage(file=r'../image/ajuda_alerta.png')                
-        self.image_ajuda_rec =  PhotoImage(file=r'../image/ajuda_rec.png')   
-        self.image_ajuda_massivo =  PhotoImage(file=r'../image/ajuda_massivo.png')   
+    def imagens_layout(self):
+        self.parentDirectory = os.path.dirname(self.fileDirectory)
+        dir_image = os.path.join(self.parentDirectory, 'image\\')
 
+        self.image_ajuda_alerta =  PhotoImage(file=dir_image + 'ajuda_alerta.png')                
+        self.image_ajuda_rec =  PhotoImage(file=dir_image +'ajuda_rec.png')   
+        self.image_ajuda_massivo =  PhotoImage(file=dir_image +'ajuda_massivo.png') 
+        self.image_config = PhotoImage(file=dir_image + 'config.png')
+        self.image_login = PhotoImage(file=dir_image + 'telaLogin.png')
+        self.image_cad_login = PhotoImage(file=dir_image + 'cadastroLogin.png')
+        self.imagem_historico = PhotoImage(file=dir_image + 'historico.png')
+        self.imagem_produtos = PhotoImage(file=dir_image + 'produtos.png')
+        self.imagem_usuarios = PhotoImage(file=dir_image + 'usuarios.png')
+        self.imagem_v_senha = PhotoImage(file=dir_image + 'verSenha.png')
+        self.imagem_acesso = PhotoImage(file=dir_image + 'p_acesso.png')
+
+    def widget_de_ajuda(self, tipo: int):
+  
         if tipo == 1:
             self.lb_image_ajuda = Label(self.root,image=self.image_ajuda_rec)
             self.lb_image_ajuda.place(x=1011, y=467, width=300, height=188)
@@ -141,6 +161,7 @@ class TelaPrincipal(validadorEntradas):
                 self.txt_produto.configure(bg='#ffffff')
                 self.msg.set('')
                 self.limpa_campos(2)
+                self.configura_btn_receber()
             else:
                 self.msg.set('PRODUTO NÃO LOCALIZADO')
                 self.descri_produto.set('')
@@ -314,7 +335,7 @@ class TelaPrincipal(validadorEntradas):
 
     def componentes_tela_inicial(self):
         self.destroi_widget()
-        self.lista_valida_comp_tela_inicial = []
+        self.lista_campos()
         self.carrega_dados_config()
         self.imagem_tela = PhotoImage(file=r'..\image\tela1.png')
         self.imagem_pesquisa = PhotoImage(file=r'..\image\pesquisar.png',width=64,height=30)
@@ -462,37 +483,40 @@ class TelaPrincipal(validadorEntradas):
                     'usuario',
                     'produto',
                     'descricao',
+                    'data_fabricacao',
+                    'data_vencimento',
                     'data_min_rec',
                     'alerta_comercial',
                     'descri_status',
-                    'data_fabricacao',
-                    'data_vencimento'
+                    'status_de_recebimento'
 
         ]
         self.tr_scroll_inicial = Scrollbar(self.root)
         self.tr_vw = ttk.Treeview(self.root,columns=colunas, show='headings',yscrollcommand=self.tr_scroll_inicial.set)
         self.tr_scroll_inicial.config(command=self.tr_vw.yview)
 
-        self.tr_vw.column('id', minwidth=0, width=0)
-        self.tr_vw.column('usuario', minwidth=0, width=25)
-        self.tr_vw.column('produto', minwidth=0, width=25)
-        self.tr_vw.column('descricao', minwidth=0, width=200)
-        self.tr_vw.column('data_min_rec', minwidth=0, width=50)
-        self.tr_vw.column('alerta_comercial', minwidth=0, width=50)
-        self.tr_vw.column('descri_status', minwidth=0, width=50)
-        self.tr_vw.column('data_fabricacao', minwidth=0, width=50)
-        self.tr_vw.column('data_vencimento', minwidth=0, width=50)
+        self.tr_vw.column('id', width=0)
+        self.tr_vw.column('usuario', width=25)
+        self.tr_vw.column('produto', width=25)
+        self.tr_vw.column('descricao', width=225)
+        self.tr_vw.column('data_fabricacao', width=25)
+        self.tr_vw.column('data_vencimento', width=25)
+        self.tr_vw.column('data_min_rec', width=25)
+        self.tr_vw.column('alerta_comercial', width=25)
+        self.tr_vw.column('descri_status', width=100)
+        self.tr_vw.column('status_de_recebimento', width=25)
 
 
         self.tr_vw.heading('id',text= 'ID')
         self.tr_vw.heading('usuario',text= 'USUARIO')
         self.tr_vw.heading('produto',text= 'PRODUTO')
         self.tr_vw.heading('descricao',text= 'DESCRIÇÃO')
-        self.tr_vw.heading('data_min_rec',text= 'DATA_MIN_REC')
+        self.tr_vw.heading('data_fabricacao',text= 'FABRICAÇÃO')
+        self.tr_vw.heading('data_vencimento',text= 'VENCIMENTO')
+        self.tr_vw.heading('data_min_rec',text= 'MIN_REC')
         self.tr_vw.heading('alerta_comercial',text= 'ALERTA_COMERCIAL')
         self.tr_vw.heading('descri_status',text= 'DESCRI_STATUS')
-        self.tr_vw.heading('data_fabricacao',text= 'DATA_FABRICAÇÃO')
-        self.tr_vw.heading('data_vencimento',text= 'DATA_VENCIMENTO')
+        self.tr_vw.heading('status_de_recebimento',text= 'STATUS')
 
 
         self.tr_vw.place(x=62, y=400, width=1299, height=323)
@@ -518,8 +542,8 @@ class TelaPrincipal(validadorEntradas):
 
     def componentes_tela_config(self):
         self.destroi_widget()
-        self.lista_valida_comp_config = []
-        self.image_config = PhotoImage(file=r'../image/config.png')
+        self.lista_campos()
+        
         self.lb_img_config = Label(self.root,image=self.image_config)
         self.lb_img_config.place(x=0, y=0)
         self.componentes_menu_bar()
@@ -667,7 +691,7 @@ class TelaPrincipal(validadorEntradas):
 
     def componentes_login_usuario(self):
         self.destroi_widget()
-        self.image_login = PhotoImage(file=r'../image/telaLogin.png')
+        
         self.lb_img_login = Label(self.root,image=self.image_login)
         self.lb_img_login.place(x=0, y=0)
        
@@ -696,19 +720,20 @@ class TelaPrincipal(validadorEntradas):
 
         self.btn_entrar = Button(self.root,
                                  text='Entrar',
-                                 bg='#676AA9',
+                                 bg=BT_COLOR,
                                  fg='#ffffff',
                                  justify='center',
                                  cursor='hand2',
+                                 activebackground=BT_COLOR,
                                  border=False,
                                  font=('Poppins', 25),
                                  command=lambda:self.logar_usuario(2))
 
-        self.btn_entrar.place(x=976, y=586, width=243, height=51)
+        self.btn_entrar.place(x=978, y=586, width=243, height=51)
 
     def componentes_cadastro_usuario(self):
         self.destroi_widget()     
-        self.image_cad_login = PhotoImage(file=r'../image/cadastroLogin.png')
+        
         self.lb_cad_login = Label(self.root,image=self.image_cad_login)
         self.lb_cad_login.place(x=0, y=0)
        
@@ -748,7 +773,8 @@ class TelaPrincipal(validadorEntradas):
 
         self.btn_cad_entrar = Button(self.root,
                                  text='ALTERAR',
-                                 bg='#676AA9',
+                                 bg=BT_COLOR,
+                                 activebackground=BT_COLOR,
                                  fg='#ffffff',
                                  justify='center',
                                  cursor='hand2',
@@ -760,7 +786,8 @@ class TelaPrincipal(validadorEntradas):
         
     def componentes_historico(self):
         self.destroi_widget()
-        self.imagem_historico = PhotoImage(file=r'..\image\historico.png')
+        self.lista_campos()
+        
         self.imagem_excel = PhotoImage(file=r'..\image\b_excel.png')
         self.imagem_ficha = PhotoImage(file=r'..\image\g_ficha.png')
 
@@ -786,6 +813,9 @@ class TelaPrincipal(validadorEntradas):
         self.dta_inicio.place(x=180, y=92, width=157, height=43)
         self.dta_fim.place(x=462, y=92, width=157, height=43)
 
+        self.lista_valida_comp_historico.append(self.dta_inicio)
+        self.lista_valida_comp_historico.append(self.dta_fim)
+
         self.bt_pesquisa_data = Button(self.root,
                             text='PESQUISAR',
                             cursor='hand2',
@@ -796,6 +826,17 @@ class TelaPrincipal(validadorEntradas):
                             justify='left',
                             border=False,
                             command=lambda:self.popular_tabela_historico(self.dta_inicio.get_date(),self.dta_fim.get_date()))
+
+        self.bt_delete_registro = Button(self.root,
+                            text='DELETAR',
+                            cursor='hand2',
+                            font=('Poppins', 15),
+                            bg='#676AA9',
+                            fg='#ffffff',
+                            compound=LEFT,
+                            justify='left',
+                            border=False,
+                            command=lambda:self.deletar_registro_historico())
 
         self.bt_gera_pdf = Button(self.root,
                             cursor='hand2',
@@ -819,6 +860,9 @@ class TelaPrincipal(validadorEntradas):
         self.bt_pesquisa_data.place(x=683, y=92, width=169, height=43)
         self.bt_gera_pdf.place(x=1260, y=92, width=51, height=51)
         self.bt_gera_rel.place(x=1339, y=92, width=51, height=51)
+        if self.info_usuario['acesso']=='NIVEL 2':
+            self.bt_delete_registro.place(x=1033, y=92, width=169, height=43)
+
 
         #tabela
         colunas = [
@@ -828,13 +872,13 @@ class TelaPrincipal(validadorEntradas):
                     'produto',
                     'descricao',
                     'categoria',
+                    'data_recebimento',
+                    'hora_recebimento',
+                    'data_fabricacao',
+                    'data_vencimento',
                     'data_min_rec',
                     'alerta_comercial',
                     'descri_status',
-                    'data_fabricacao',
-                    'data_vencimento',
-                    'data_recebimento',
-                    'hora_recebimento',
                     'status_de_recebimento'
 
         ]
@@ -849,13 +893,13 @@ class TelaPrincipal(validadorEntradas):
         self.tr_vw_historico.column('produto', width=25)
         self.tr_vw_historico.column('descricao', width=200)
         self.tr_vw_historico.column('categoria', width=50)
+        self.tr_vw_historico.column('data_recebimento', width=50)
+        self.tr_vw_historico.column('hora_recebimento', width=50)
+        self.tr_vw_historico.column('data_fabricacao', width=50)
+        self.tr_vw_historico.column('data_vencimento', width=50)
         self.tr_vw_historico.column('data_min_rec', width=50)
         self.tr_vw_historico.column('alerta_comercial', width=50)
         self.tr_vw_historico.column('descri_status', width=50)
-        self.tr_vw_historico.column('data_fabricacao', width=50)
-        self.tr_vw_historico.column('data_vencimento', width=50)
-        self.tr_vw_historico.column('data_recebimento', width=50)
-        self.tr_vw_historico.column('hora_recebimento', width=50)
         self.tr_vw_historico.column('status_de_recebimento', width=50)
 
 
@@ -865,13 +909,13 @@ class TelaPrincipal(validadorEntradas):
         self.tr_vw_historico.heading('produto',text= 'PRODUTO')
         self.tr_vw_historico.heading('descricao',text= 'DESCRIÇÃO')
         self.tr_vw_historico.heading('categoria',text= 'CATEGORIA')
-        self.tr_vw_historico.heading('data_min_rec',text= 'DATA_MIN_REC')
-        self.tr_vw_historico.heading('alerta_comercial',text= 'ALERTA_COMERCIAL')
-        self.tr_vw_historico.heading('descri_status',text= 'DESCRI_STATUS')
-        self.tr_vw_historico.heading('data_fabricacao',text= 'DATA_FABRICAÇÃO')
-        self.tr_vw_historico.heading('data_vencimento',text= 'DATA_VENCIMENTO')
         self.tr_vw_historico.heading('data_recebimento',text= 'DATA_RECEBIMENTO')
         self.tr_vw_historico.heading('hora_recebimento',text= 'HORA_RECEBIMENTO')
+        self.tr_vw_historico.heading('data_fabricacao',text= 'FABRICAÇÃO')
+        self.tr_vw_historico.heading('data_vencimento',text= 'VENCIMENTO')
+        self.tr_vw_historico.heading('data_min_rec',text= 'MIN_REC')
+        self.tr_vw_historico.heading('alerta_comercial',text= 'ALERTA_COMERCIAL')
+        self.tr_vw_historico.heading('descri_status',text= 'DESCRI_STATUS')
         self.tr_vw_historico.heading('status_de_recebimento',text= 'STATUS_RECEBIMENTO')
 
         self.tr_vw_historico.place(x=62, y=171, width=1303, height=552)
@@ -891,7 +935,7 @@ class TelaPrincipal(validadorEntradas):
 
         self.componentes_menu_bar()
 
-        self.imagem_produtos = PhotoImage(file=r'..\image\produtos.png')
+        
         lb_image = Label(self.root,image=self.imagem_produtos)
         lb_image.place(x=0, y=0)
 
@@ -1033,8 +1077,7 @@ class TelaPrincipal(validadorEntradas):
         if primeiro_acesso:
             self.componentes_menu_bar()
 
-        self.imagem_usuarios = PhotoImage(file=r'..\image\usuarios.png')
-        self.imagem_v_senha = PhotoImage(file=r'..\image\verSenha.png')
+
         lb_image = Label(self.root,image=self.imagem_usuarios)
         lb_image.place(x=0, y=0)
 
@@ -1223,7 +1266,7 @@ class TelaPrincipal(validadorEntradas):
             
     def componentes_primeiro_acesso(self):
         self.destroi_widget()
-        self.imagem_acesso = PhotoImage(file=r'..\image\p_acesso.png')
+        
         lb_image = Label(self.root,image=self.imagem_acesso)
         lb_image.place(x=0, y=0)
 
@@ -1300,11 +1343,15 @@ class TelaPrincipal(validadorEntradas):
         p = self.centralizacao_tela(1440,750,self.root)
         self.root.geometry("%dx%d+%d+%d" % (p[0],p[1],p[2],p[3]))
 
-        # if self.validando_primeiro_acesso():
-        #     self.componentes_primeiro_acesso()
-        #     self.info_usuario['acesso'] = 'NIVEL 2'
-        # else:
-        self.componentes_login_usuario()
+        if self.validando_primeiro_acesso():
+            self.componentes_primeiro_acesso()
+            self.info_usuario['acesso'] = 'NIVEL 2'
+            bd = DataBase(1)
+            sql ="""UPDATE tb_primeiro_acesso SET valor = 1 WHERE id = 1"""
+            bd.update(sql)
+        else:
+            self.componentes_login_usuario()
+
 
     def insere_registros_rec(self):
         self.variaveis_tela_inicial()
@@ -1342,11 +1389,12 @@ class TelaPrincipal(validadorEntradas):
                     conferente,
                     produto,
                     descricao,
+                    data_fabricacao,
+                    data_vencimento,
                     data_min_rec,
                     alerta_comercial,
                     descri_status,
-                    data_fabricacao,
-                    data_vencimento
+                    status_de_recebimento
                 FROM tb_dataBase WHERE data_recebimento = '{}' ORDER BY id DESC """.format(datetime.now().date())
 
         dados_rec = bd.selectAll(sql)
@@ -1364,13 +1412,13 @@ class TelaPrincipal(validadorEntradas):
                         produto,
                         descricao,
                         categoria,
+                        data_recebimento,
+                        hora_recebimento,
+                        data_fabricacao,
+                        data_vencimento,
                         data_min_rec,
                         alerta_comercial,
                         descri_status,
-                        data_fabricacao,
-                        data_vencimento,
-                        data_recebimento,
-                        hora_recebimento,
                         status_de_recebimento,
                         percent_rec_minimo,
                         percent_ale_comercial            
@@ -1403,13 +1451,29 @@ class TelaPrincipal(validadorEntradas):
             return
             
     def popular_tabela_historico(self,dtaInicio:date, dtaFim: date):
-            dados_rec = self.select_dados_historico(dtaInicio, dtaFim)
-            self.tr_vw_historico.delete(*self.tr_vw_historico.get_children())
-            try:
-                for dados in dados_rec:
-                    self.tr_vw_historico.insert('','end',values=dados)
-            except:
-                pass
+            if self.valida_campos_vazios(self.lista_valida_comp_historico):
+                dados_rec = self.select_dados_historico(dtaInicio, dtaFim)
+                self.tr_vw_historico.delete(*self.tr_vw_historico.get_children())
+                try:
+                    for dados in dados_rec:
+                        self.tr_vw_historico.insert('','end',values=dados)
+                except:
+                    pass
+
+    def deletar_registro_historico(self):
+        if self.valida_campos_vazios(self.lista_valida_comp_historico):
+            self.tr_vw_historico.selection()
+            lista = [self.tr_vw_historico.item(n, 'values') for n in self.tr_vw_historico.selection()]
+            id = lista[0][0]
+            opc = messagebox.askyesnocancel('Deletar Registro',F'Confirmar exclusão do registro?')
+
+            if opc:
+                sql = """DELETE FROM tb_dataBase WHERE id = {}""".format(id)
+                bd = DataBase(2)
+                bd.delete(sql)
+                self.popular_tabela_historico(self.dta_inicio.get_date(), self.dta_fim.get_date())
+            
+
 
     def popular_tabela_produtos(self, lista_dados:list =[]):
         if lista_dados:
@@ -1433,11 +1497,11 @@ class TelaPrincipal(validadorEntradas):
                                         numSku = valores[3],
                                         descri_produto = valores[4],
                                         categoria = valores[5],
-                                        dta_fab = valores[9],
-                                        dta_venc = valores[10],
-                                        rec_minimo = valores[6],
-                                        alerta_comercial = valores[7],
-                                        dta_recebimento = valores[11],
+                                        dta_fab = valores[8],
+                                        dta_venc = valores[9],
+                                        rec_minimo = valores[10],
+                                        alerta_comercial = valores[11],
+                                        dta_recebimento = valores[6],
                                         usuario = valores[2],
                                         matricula = valores[1],
                                         nome_arquivo = self.nome_saida_pdf
@@ -1497,8 +1561,23 @@ class TelaPrincipal(validadorEntradas):
                 nome_relatorio = lista_acesso[0]
                 nome_pdf = lista_acesso[1]
                 dir_bd = lista_acesso[2]    
-                scl_alert_comercial = lista_acesso[3]
-                scl_rec_minimo = lista_acesso[4]
+                scl_rec_minimo = lista_acesso[3]
+                scl_alert_comercial = lista_acesso[4]
+
+                if self.valida_campos_vazios(self.lista_valida_comp_config) or len(lista_acesso)> 0:
+                    sql = """UPDATE tb_config SET dir_bd = '{}', nome_pdf = '{}', nome_rel = '{}' WHERE id = 1
+                            """.format(dir_bd, nome_pdf, nome_relatorio)
+                    bd = DataBase(1)
+                    bd.update(sql)
+
+                # if scl_rec_minimo <= scl_alert_comercial:
+                #     messagebox.showwarning('Erro de Periodo','Recebimento minimo menor que alerta Comercial.')
+                # elif scl_rec_minimo == 0 or scl_alert_comercial == 0:
+                #     messagebox.showwarning('Erro de Periodo','Defina valores Maiores que 0.')
+                # else:
+                #     sql2 = """UPDATE tb_periodo_rec SET r_minimo = {}, a_comercial = {} WHERE id = 1""".format(scl_rec_minimo, scl_alert_comercial)
+                #     bd = DataBase(2)
+                #     bd.update(sql2)
             else:
 
                 nome_relatorio = self.nome_relatorio.get()
@@ -1507,20 +1586,20 @@ class TelaPrincipal(validadorEntradas):
                 scl_alert_comercial = self.scl_alert_comercial.get()
                 scl_rec_minimo = self.scl_rec_minimo.get()
 
-            if self.valida_campos_vazios(self.lista_valida_comp_config) or len(lista_acesso)> 0:
-                sql = """UPDATE tb_config SET dir_bd = '{}', nome_pdf = '{}', nome_rel = '{}' WHERE id = 1
-                        """.format(dir_bd, nome_pdf, nome_relatorio)
-                bd = DataBase(1)
-                bd.update(sql)
+                if self.valida_campos_vazios(self.lista_valida_comp_config) or len(lista_acesso)> 0:
+                    sql = """UPDATE tb_config SET dir_bd = '{}', nome_pdf = '{}', nome_rel = '{}' WHERE id = 1
+                            """.format(dir_bd, nome_pdf, nome_relatorio)
+                    bd = DataBase(1)
+                    bd.update(sql)
 
-            if scl_rec_minimo <= scl_alert_comercial:
-                messagebox.showwarning('Erro de Periodo','Recebimento minimo menor que alerta Comercial.')
-            elif scl_rec_minimo == 0 or scl_alert_comercial == 0:
-                messagebox.showwarning('Erro de Periodo','Defina valores Maiores que 0.')
-            else:
-                sql2 = """UPDATE tb_periodo_rec SET r_minimo = {}, a_comercial = {} WHERE id = 1""".format(scl_rec_minimo, scl_alert_comercial)
-                bd = DataBase(2)
-                bd.update(sql2)
+                if scl_rec_minimo <= scl_alert_comercial:
+                    messagebox.showwarning('Erro de Periodo','Recebimento minimo menor que alerta Comercial.')
+                elif scl_rec_minimo == 0 or scl_alert_comercial == 0:
+                    messagebox.showwarning('Erro de Periodo','Defina valores Maiores que 0.')
+                else:
+                    sql2 = """UPDATE tb_periodo_rec SET r_minimo = {}, a_comercial = {} WHERE id = 1""".format(scl_rec_minimo, scl_alert_comercial)
+                    bd = DataBase(2)
+                    bd.update(sql2)
 
             self.carrega_dados_config()
 
@@ -1868,7 +1947,7 @@ class TelaPrincipal(validadorEntradas):
                 pass
 
     def primeiro_login_acesso(self):
-        opc = messagebox.askyesnocancel('Banco de Dados', 'Localize o banco de dados para continuar.')
+        opc = messagebox.askyesnocancel('Banco de Dados', 'Localize o banco com o nome de "'"dataBaseGlobal.db"'" para continuar.')
 
         if opc:
             try:
@@ -1877,8 +1956,6 @@ class TelaPrincipal(validadorEntradas):
                 caminho_dir = os.path.dirname(diretorio)
                 v_conexao = bd.teste_de_conexao(diretorio)
                 if v_conexao:
-                    # lista_acesso = ['RELATÓRIO_REC', 'PDF', caminho_dir, 75, 25]
-                    # self.atualiza_dados_config(lista_acesso)
                     sql = """UPDATE tb_config SET dir_bd = '{}', nome_pdf = '{}', nome_rel = '{}' WHERE id = 1
                             """.format(caminho_dir, 'PDF', 'RELATÓRIO_REC')
                     bd = DataBase(1)

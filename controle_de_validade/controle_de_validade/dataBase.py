@@ -4,7 +4,12 @@ import sqlite3 as sq
 
 class DataBase:
     def __init__(self, tipo: int) -> None:
-        self.dblocal =r'..\data\dataBaseLocal.db'
+        self.absolutepath = os.path.abspath(__file__)
+        self.fileDirectory = os.path.dirname(self.absolutepath)
+        self.parentDirectory = os.path.dirname(self.fileDirectory)
+        dir_data = os.path.join(self.parentDirectory, 'data\\')
+
+        self.dblocal =dir_data + 'dataBaseLocal.db'
         self.banco_global ='\dataBaseGlobal.db'
         self.dbGlobal  = ''
         self.tipo = tipo
@@ -131,7 +136,6 @@ class DataBase:
 
                             )""")
 
-
         self.conn.commit()
         self.conn.close()
 
@@ -150,7 +154,7 @@ class DataBase:
                             )""")
         self.conn.commit()
         self.conn.close()
-   
+
 
 if __name__ == '__main__':
     lista =[
