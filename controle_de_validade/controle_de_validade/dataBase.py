@@ -1,14 +1,36 @@
+import os
 import sqlite3 as sq
-config = [
-    ('c://teste/bd','c://teste/pdf','pdf', 'c://teste/rel', 'rel', 25, 75)
-]
+
 
 class DataBase:
     def __init__(self, tipo: int) -> None:
-        self.dbGlobal =r'C:\Users\2103896595\Desktop\outros\banco validade\dataBaseGlobal.db'
-        self.dblocal =r'C:\Users\2103896595\Desktop\outros\banco validade\dataBaseLocal.db'
+        self.dblocal =r'..\data\dataBaseLocal.db'
+        self.banco_global ='\dataBaseGlobal.db'
+        self.dbGlobal  = ''
         self.tipo = tipo
         self.connect_data_base(self.tipo)
+
+    def conecta_banco_global(self):
+        try:
+            sql ="""SELECT dir_bd FROM tb_config WHERE id = 1"""
+            self.connect_data_base(1)
+            caminho_global = self.selectAll(sql)
+            self.dbGlobal = caminho_global[0][0] + self.banco_global
+            if self.teste_de_conexao(self.dbGlobal):
+                return True
+            else:
+                return True
+        except:
+            print(f'Erro de Conexão...')
+            return False
+
+    def teste_de_conexao(self, dir):
+        try:
+            self.conn = sq.connect(dir)
+            self.conn.close()
+            return True
+        except:
+            return False
 
     def connect_data_base(self, tipo: int):
         try:
@@ -17,8 +39,9 @@ class DataBase:
                 self.conn = sq.connect(self.dblocal)
                 self.cursor = self.conn.cursor()
             elif tipo == 2:
-                self.conn = sq.connect(self.dbGlobal)
-                self.cursor = self.conn.cursor()
+                if self.conecta_banco_global():
+                    self.conn = sq.connect(self.dbGlobal)
+                    self.cursor = self.conn.cursor()
             else:
                 pass
         except:
@@ -46,14 +69,8 @@ class DataBase:
         return data
 
 
-    def cria_tabelas(self):
-        # self.cursor.execute(""" CREATE TABLE IF NOT EXISTS tb_config(
-        #                      id INTEGER PRIMARY KEY AUTOINCREMENT,
-        #                      dir_bd VARCHAR(250),
-        #                      nome_pdf VARCHAR(50),
-        #                      nome_rel VARCHAR(50)                          
+    def cria_tabelas_global(self):
 
-        #                     )""")
 
         self.cursor.execute(""" CREATE TABLE IF NOT EXISTS tb_periodo_rec(
                              id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -118,7 +135,21 @@ class DataBase:
         self.conn.commit()
         self.conn.close()
 
+    def cria_tabelas_local(self):
+        self.cursor.execute(""" CREATE TABLE IF NOT EXISTS tb_config(
+                             id INTEGER PRIMARY KEY AUTOINCREMENT,
+                             dir_bd VARCHAR(250),
+                             nome_pdf VARCHAR(50),
+                             nome_rel VARCHAR(50)                          
 
+                            )""")
+
+        self.cursor.execute(""" CREATE TABLE IF NOT EXISTS tb_primeiro_acesso(
+                             id INTEGER PRIMARY KEY AUTOINCREMENT,
+                             valor INTEGER
+                            )""")
+        self.conn.commit()
+        self.conn.close()
    
 
 if __name__ == '__main__':
@@ -170,8 +201,8 @@ if __name__ == '__main__':
 (None, 'TAPECARIA')
 
     ]
-    bd = DataBase(2)
-    bd.cria_tabelas()
+    bd = DataBase(1)
+    bd.cria_tabelas_local()
     # sql = f'INSERT INTO tb_categoria VALUES (?,?)'
 
     # bd.insert(sql, lista)
