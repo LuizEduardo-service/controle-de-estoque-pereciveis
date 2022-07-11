@@ -72,7 +72,22 @@ class TelaPrincipal(validadorEntradas):
             return False
 
         return True
-                
+
+    def widget_de_ajuda(self, tipo: int):
+        self.image_ajuda_alerta =  PhotoImage(file=r'../image/ajuda_alerta.png')                
+        self.image_ajuda_rec =  PhotoImage(file=r'../image/ajuda_rec.png')   
+        self.image_ajuda_massivo =  PhotoImage(file=r'../image/ajuda_massivo.png')   
+
+        if tipo == 1:
+            self.lb_image_ajuda = Label(self.root,image=self.image_ajuda_rec)
+            self.lb_image_ajuda.place(x=1011, y=467, width=300, height=188)
+        elif tipo == 2:
+            self.lb_image_ajuda = Label(self.root,image=self.image_ajuda_alerta)
+            self.lb_image_ajuda.place(x=1011, y=467, width=300, height=188)
+        elif tipo == 3:
+            self.lb_image_ajuda = Label(self.root,image=self.image_ajuda_massivo)
+            self.lb_image_ajuda.place(x=277, y=391, width=300, height=188)
+
 
     def centralizacao_tela(self,largura, altura,root):
         param = []
@@ -244,11 +259,13 @@ class TelaPrincipal(validadorEntradas):
             elif status_rec == 'PRODUTO NÃO LIBERADO PARA RECEBIMENTO' and status_rec_validado == 'PRODUTO NÃO LIBERADO PARA RECEBIMENTO':
                 opc = messagebox.askyesnocancel("Recebimento de Mercadoria", 
                                                 'Mercadoria não esta nos parametros de recebimento.\nContinuar recebimento?')
+                messagebox.showerror('er',f'{opc}')
                 if opc:
                     if self.valida_campos_vazios(self.lista_valida_comp_tela_inicial):
-                        messagebox.showinfo('Recebimento','Produto recebido!')
+                        # messagebox.showinfo('Recebimento','Produto recebido!')
                         self.status_recebimento = 'RECEBIDO'
                         self.insere_registros_rec()
+                        self.gerar_pdf()
                         self.select_dados_rec()
                         self.txt_produto.focus()
                         self.limpa_campos(1)
@@ -257,14 +274,23 @@ class TelaPrincipal(validadorEntradas):
 
                 elif opc is None:
                     pass
+                    # self.txt_produto.focus()
+                    # self.insere_registros_rec()
+                    # self.select_dados_rec()
+                    # self.txt_produto.focus_force()
+                    # self.limpa_campos(1)
+                    # self.status_recebimento = 'NÃO RECEBIDO'
+                    # self.configura_btn_receber()
                 else:
-                    messagebox.showerror('Recebimento','Produto não recebido!')
+                    self.status_recebimento = 'NÃO RECEBIDO'
+                    self.insere_registros_rec()
+                    self.select_dados_rec()
+                    self.txt_produto.focus_force()
                     self.limpa_campos(1)
-                    self.txt_produto.focus()
-                    self.status_recebimento = ' NÃO RECEBIDO'
                     self.configura_btn_receber()
             else:
                 pass
+
 
     def define_diretorio(self, tipo: str) -> str:
             diretorio = easygui.diropenbox()
@@ -565,9 +591,15 @@ class TelaPrincipal(validadorEntradas):
                                     text='?',
                                     font=('Poppins', 10))
 
+        self.ajd_rec_minimo.bind('<Enter>',lambda e:self.widget_de_ajuda(1))
+        self.ajd_rec_minimo.bind('<Leave>',lambda e:self.lb_image_ajuda.destroy())
+
         self.ajd_alert_comercial = Label(self.root,
                                         text='?',
                                         font=('Poppins', 10))
+
+        self.ajd_alert_comercial.bind('<Enter>',lambda e:self.widget_de_ajuda(2))
+        self.ajd_alert_comercial.bind('<Leave>',lambda e:self.lb_image_ajuda.destroy())
 
         self.sc_rec_minimo.place(x=70, y=532, width=826, height=30)
         self.sc_alert_comercial.place(x=70, y=618, width=826, height=30)
@@ -882,6 +914,15 @@ class TelaPrincipal(validadorEntradas):
                                                      
                                                             
         )
+
+        self.ajd_massivo = Label(self.root,
+                                        text='?',
+                                        font=('Poppins', 10))
+
+        self.ajd_massivo.bind('<Enter>',lambda e:self.widget_de_ajuda(3))
+        self.ajd_massivo.bind('<Leave>',lambda e:self.lb_image_ajuda.destroy())
+
+        self.ajd_massivo.place(x=244, y=393, width=13, height=13)
        
         self.lista_valida_comp_produtos.append(self.txt_cd_produto)
         self.lista_valida_comp_produtos.append(self.txt_cd_descri_produto)
@@ -1259,11 +1300,11 @@ class TelaPrincipal(validadorEntradas):
         p = self.centralizacao_tela(1440,750,self.root)
         self.root.geometry("%dx%d+%d+%d" % (p[0],p[1],p[2],p[3]))
 
-        if self.validando_primeiro_acesso():
-            self.componentes_primeiro_acesso()
-            self.info_usuario['acesso'] = 'NIVEL 2'
-        else:
-            self.componentes_login_usuario()
+        # if self.validando_primeiro_acesso():
+        #     self.componentes_primeiro_acesso()
+        #     self.info_usuario['acesso'] = 'NIVEL 2'
+        # else:
+        self.componentes_login_usuario()
 
     def insere_registros_rec(self):
         self.variaveis_tela_inicial()
@@ -1902,6 +1943,7 @@ class TelaPrincipal(validadorEntradas):
     def inserir_primeiro_usuario(self):
         self.inserir_usuario(self.nova_senha)
         self.componentes_login_usuario()
+
 
 if __name__ == '__main__':
     TelaPrincipal()
