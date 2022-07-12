@@ -1,17 +1,17 @@
+
 import os
 from time import sleep
 from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
-from tkinter.filedialog import askdirectory
-import easygui
+from tkinter.filedialog import askdirectory, askopenfilename
 from tkcalendar import DateEntry
 from datetime import date, datetime
 from controle_de_validade.layout_pdf import Relatorios
 from controle_de_validade.dataBase import DataBase
 import pandas as pd
 import time
-import babel.numbers
+
 
 
 
@@ -35,8 +35,6 @@ class TelaPrincipal(validadorEntradas):
 
     def __init__(self) -> None:
         self.root = root
-        self.absolutepath = os.path.abspath(__file__)
-        self.fileDirectory = os.path.dirname(self.absolutepath)
         self.imagens_layout()
         self.valida_entradas()
         self.lista_campos()
@@ -81,7 +79,7 @@ class TelaPrincipal(validadorEntradas):
         return True
 
     def imagens_layout(self):
-        self.parentDirectory = os.path.dirname(self.fileDirectory)
+        self.parentDirectory = os.path.dirname(os.getcwd())
         dir_image = os.path.join(self.parentDirectory, 'image\\')
 
         self.image_ajuda_alerta =  PhotoImage(file=dir_image + 'ajuda_alerta.png')                
@@ -95,6 +93,8 @@ class TelaPrincipal(validadorEntradas):
         self.imagem_usuarios = PhotoImage(file=dir_image + 'usuarios.png')
         self.imagem_v_senha = PhotoImage(file=dir_image + 'verSenha.png')
         self.imagem_acesso = PhotoImage(file=dir_image + 'p_acesso.png')
+        self.imagem_tela = PhotoImage(file=dir_image + 'tela1.png')
+
 
     def widget_de_ajuda(self, tipo: int):
   
@@ -314,7 +314,7 @@ class TelaPrincipal(validadorEntradas):
 
 
     def define_diretorio(self, tipo: str) -> str:
-            diretorio = easygui.diropenbox()
+            diretorio = askdirectory()
             if diretorio:
                 if tipo == 'bd':
                     self.dir_bd.set(diretorio)
@@ -328,7 +328,7 @@ class TelaPrincipal(validadorEntradas):
         self.foraPrazo.title('Controle de Validade')
         p = self.centralizacao_tela(1440,750,self.root)
         self.root.geometry("%dx%d+%d+%d" % (p[0],p[1],p[2],p[3]))
-        self.imagem_tela = PhotoImage(file=r'..\image\tela1.png')
+        
 
     def configura_btn_receber(self):
         self.bt_receber.configure(bg='#676AA9', fg='#ffffff')
@@ -1931,7 +1931,7 @@ class TelaPrincipal(validadorEntradas):
 
         if opc:
             try:
-                diretorio = easygui.fileopenbox()
+                diretorio = askopenfilename()
                 bd = DataBase(2)
                 caminho_dir = os.path.dirname(diretorio)
                 v_conexao = bd.teste_de_conexao(diretorio)
@@ -1951,7 +1951,7 @@ class TelaPrincipal(validadorEntradas):
 
         if opc:
             try:
-                diretorio = easygui.fileopenbox()
+                diretorio = askopenfilename()
                 bd = DataBase(2)
                 caminho_dir = os.path.dirname(diretorio)
                 v_conexao = bd.teste_de_conexao(diretorio)
