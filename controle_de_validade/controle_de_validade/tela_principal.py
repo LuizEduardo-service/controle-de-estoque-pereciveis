@@ -1,3 +1,4 @@
+from cgitb import text
 import os
 import string
 from time import sleep
@@ -8,6 +9,7 @@ from tkinter.filedialog import askdirectory, askopenfilename
 from tkcalendar import DateEntry
 from datetime import date, datetime
 from controle_de_validade.layout_pdf import Relatorios
+from controle_de_validade.calendar_widget import CalendarWidget
 from controle_de_validade.dataBase import DataBase
 import pandas as pd
 import time
@@ -168,8 +170,8 @@ class TelaPrincipal(validadorEntradas):
         self.numSku_v = self.numSku.get()
         self.descri_produto_v = self.descri_produto.get()
         self.categoria_v = self.categoria.get()
-        self.dta_fab_v = self.dta_fab.get_date()
-        self.dta_venc_v = self.dta_venc.get_date()
+        self.dta_fab_v = self.dta_fab.get()
+        self.dta_venc_v = self.dta_venc.get()
         self.rec_minimo_v = self.r_minimo
         self.alerta_comercial_v = self.a_comercial
         self.dta_recebimento_v = self.data_recebimento
@@ -210,8 +212,8 @@ class TelaPrincipal(validadorEntradas):
     def executa_calculos(self):
         
             self.status_recebimento: str = ''
-            self.data_fab = self.dta_fab.get_date()
-            self.data_venc = self.dta_venc.get_date()
+            self.data_fab = self.dta_fab.get()
+            self.data_venc = self.dta_venc.get()
             self.r_minimo = self.define_minimo_recebimento(self.data_venc, self.data_fab, self.valor_rec_minimo)
             self.a_comercial = self.define_alerta_comercial(self.data_venc, self.data_fab, self.valor_ale_comercial)
             status_rec = self.btReceber.get()
@@ -311,6 +313,15 @@ class TelaPrincipal(validadorEntradas):
     def configura_btn_receber(self):
         self.bt_receber.configure(bg='#676AA9', fg='#ffffff')
 
+    def escolhe_data(self, campo):
+        self.calendario = Toplevel(self.root)
+        data = CalendarWidget(self.calendario)
+        resultado = data._select_date_time()
+        print(resultado)
+        campo.set(resultado)
+
+
+
     def componentes_tela_inicial(self):
         self.destroi_widget()
         self.lista_valida_comp_tela_inicial = []
@@ -327,23 +338,30 @@ class TelaPrincipal(validadorEntradas):
         self.relogio_h.place(x=1254, y=164, width=122, height=24)
         self.relogio()
 
-       #label data
-        self.dta_fab = DateEntry(self.root,
-                            selectmode='day',
+        #label data
+        self.v_dta_fab = StringVar()
+        self.v_dta_venc = StringVar()
+
+        self.dta_fab = Entry(self.root,
+                            textvariable=self.v_dta_fab,
                             font=('Poppins',20), 
                             justify='center')
 
-        self.dta_venc = DateEntry(self.root,
-                            selectmode='day',
+        self.dta_fab.bind("<1>",lambda e: self.escolhe_data(self.v_dta_fab))
+
+        self.dta_venc = Entry(self.root,
+                            textvariable=self.v_dta_venc,
                             font=('Poppins',20), 
                             justify='center')
+
+        self.dta_venc.bind("<1>",lambda e: self.escolhe_data(self.v_dta_venc))
 
         self.dta_fab.place(x=60, y=263, width=307, height=43)
         self.dta_venc.place(x=399, y=263, width=307, height=43)
         self.lista_valida_comp_tela_inicial.append(self.dta_fab)
         self.lista_valida_comp_tela_inicial.append(self.dta_venc)
-        self.dta_fab._set_text('')
-        self.dta_venc._set_text('')
+        self.dta_fab.configure(text='')
+        self.dta_venc.configure(text='')
 
         #botões
         self.btReceber = StringVar()
@@ -772,15 +790,15 @@ class TelaPrincipal(validadorEntradas):
         self.relogio_h.place(x=683, y=92, width=169, height=43)
         self.relogio()
 
-        self.dta_inicio = DateEntry(self.root,
-                            selectmode='day',
+        self.dta_inicio = Entry(self.root,
                             font=('Poppins',20), 
                             justify='center')
 
-        self.dta_fim = DateEntry(self.root,
-                            selectmode='day',
+        self.dta_fim = Entry(self.root,
                             font=('Poppins',20), 
                             justify='center')
+
+
 
         self.dta_inicio.place(x=180, y=92, width=157, height=43)
         self.dta_fim.place(x=462, y=92, width=157, height=43)
@@ -794,7 +812,7 @@ class TelaPrincipal(validadorEntradas):
                             compound=LEFT,
                             justify='left',
                             border=False,
-                            command=lambda:self.popular_tabela_historico(self.dta_inicio.get_date(),self.dta_fim.get_date()))
+                            command=lambda:self.popular_tabela_historico(self.dta_inicio.get(),self.dta_fim.get()))
 
         self.bt_gera_pdf = Button(self.root,
                             cursor='hand2',
@@ -811,8 +829,8 @@ class TelaPrincipal(validadorEntradas):
                             border=False,
                             image=self.imagem_excel,
                             command=lambda:self.gerar_relatorio_rec(
-                                    self.dta_inicio.get_date(),
-                                    self.dta_fim.get_date()
+                                    self.dta_inicio.get(),
+                                    self.dta_fim.get()
                                     ))
 
         self.bt_pesquisa_data.place(x=683, y=92, width=169, height=43)
