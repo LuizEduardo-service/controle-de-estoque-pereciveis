@@ -4,8 +4,11 @@ import sqlite3 as sq
 
 class DataBase:
     def __init__(self, tipo: int) -> None:
-        self.dblocal =r'..\data\dataBaseLocal.db'
-        self.banco_global ='\dataBaseGlobal.db'
+        self.parentDirectory = os.path.dirname(os.getcwd())
+        dir_data = os.path.join(self.parentDirectory, 'data\\')
+
+        self.dblocal = dir_data + 'dataBaseLocal.db'
+        self.banco_global ='dataBaseGlobal.db'
         self.dbGlobal  = ''
         self.tipo = tipo
         self.connect_data_base(self.tipo)
@@ -15,7 +18,7 @@ class DataBase:
             sql ="""SELECT dir_bd FROM tb_config WHERE id = 1"""
             self.connect_data_base(1)
             caminho_global = self.selectAll(sql)
-            self.dbGlobal = caminho_global[0][0] + self.banco_global
+            self.dbGlobal = caminho_global[0][0] + '\\' + self.banco_global
             if self.teste_de_conexao(self.dbGlobal):
                 return True
             else:
@@ -131,7 +134,6 @@ class DataBase:
 
                             )""")
 
-
         self.conn.commit()
         self.conn.close()
 
@@ -150,7 +152,7 @@ class DataBase:
                             )""")
         self.conn.commit()
         self.conn.close()
-   
+
 
 if __name__ == '__main__':
     lista =[

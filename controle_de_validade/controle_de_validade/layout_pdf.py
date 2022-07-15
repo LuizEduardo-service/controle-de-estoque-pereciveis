@@ -1,4 +1,5 @@
 import datetime as dt
+import os
 from reportlab.pdfgen import canvas
 from reportlab.lib import colors
 import webbrowser
@@ -11,6 +12,11 @@ except:
 
 class Relatorios:
     def __init__(self, **kwargs) -> None:
+        self.absolutepath = os.path.abspath(__file__)
+        self.fileDirectory = os.path.dirname(self.absolutepath)
+        self.parentDirectory = os.path.dirname(self.fileDirectory)
+        self.dir_pdf = os.path.join(self.parentDirectory, 'pdf\\')
+
         self.numSku = kwargs.get('numSku')
         self.descri_produto = kwargs.get('descri_produto')
         self.categoria = kwargs.get('categoria')
@@ -27,12 +33,12 @@ class Relatorios:
 
 
     def mostra_cliente(self):
-        webbrowser.open(self.nome_arquivo + '.pdf')
+        webbrowser.open(self.dir_pdf + self.nome_arquivo + '.pdf')
 
     def gerar_relatorio(self):
         FONT_PRINCIPAL = 'Helvetica-Bold'
 
-        self.c = canvas.Canvas(self.nome_arquivo + '.pdf')
+        self.c = canvas.Canvas(self.dir_pdf + self.nome_arquivo + '.pdf')
 
 
         #faixa limite de expedição
