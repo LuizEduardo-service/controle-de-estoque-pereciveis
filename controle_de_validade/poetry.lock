@@ -501,7 +501,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "6d9ef72c90a9ca473580b613563b59e5d6e9b2480ec2b67d8c368cd738d72cd5"
+content-hash = "5f3fd85377120b7245befa89f073251436794997e6dea1155a6c720ccfd0a6d0"
 
 [metadata.files]
 antiorm = [

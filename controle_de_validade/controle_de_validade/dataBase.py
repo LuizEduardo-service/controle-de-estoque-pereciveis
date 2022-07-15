@@ -7,7 +7,7 @@ class DataBase:
         self.parentDirectory = os.path.dirname(os.getcwd())
         dir_data = os.path.join(self.parentDirectory, 'data\\')
 
-        self.dblocal =dir_data + 'dataBaseLocal.db'
+        self.dblocal = dir_data + 'dataBaseLocal.db'
         self.banco_global ='dataBaseGlobal.db'
         self.dbGlobal  = ''
         self.tipo = tipo

@@ -5,7 +5,7 @@ from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
 from tkinter.filedialog import askdirectory, askopenfilename
-from tkcalendar import DateEntry
+from tkcalendar import *
 from datetime import date, datetime
 from controle_de_validade.layout_pdf import Relatorios
 from controle_de_validade.dataBase import DataBase

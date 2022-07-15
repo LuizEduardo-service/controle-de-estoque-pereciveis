@@ -12,6 +12,7 @@ tkcalendar = "^1.6.1"
 db-sqlite3 = "^0.0.1"
 pandas = "^1.4.3"
 openpyxl = "^3.0.10"
+Babel = "^2.10.3"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
