@@ -17,11 +17,14 @@ class Relatorios:
         self.parentDirectory = os.path.dirname(self.fileDirectory)
         self.dir_pdf = os.path.join(self.parentDirectory, 'pdf\\')
 
+        f_data_fab = dt.datetime.strftime(kwargs.get('dta_fab'),'%Y-%m-%d')
+        f_data_venc = dt.datetime.strftime(kwargs.get('dta_venc'),'%Y-%m-%d')
+
         self.numSku = kwargs.get('numSku')
         self.descri_produto = kwargs.get('descri_produto')
         self.categoria = kwargs.get('categoria')
-        self.dta_fab = dt.datetime.strptime(str(kwargs.get('dta_fab')),'%Y-%m-%d')
-        self.dta_venc = dt.datetime.strptime(str(kwargs.get('dta_venc')),'%Y-%m-%d')
+        self.dta_fab = dt.datetime.strptime(f_data_fab,'%Y-%m-%d')
+        self.dta_venc = dt.datetime.strptime(f_data_venc,'%Y-%m-%d')
         self.rec_minimo = dt.datetime.strptime(str(kwargs.get('rec_minimo')),'%Y-%m-%d')
         self.alerta_comercial = dt.datetime.strptime(str(kwargs.get('alerta_comercial')),'%Y-%m-%d')
         self.dta_recebimento = dt.datetime.strptime(str(kwargs.get('dta_recebimento')),'%Y-%m-%d')
