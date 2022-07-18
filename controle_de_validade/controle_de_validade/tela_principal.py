@@ -1,6 +1,6 @@
-from cgitb import text
+
 import os
-import string
+from sre_compile import isstring
 from time import sleep
 from tkinter import *
 from tkinter import ttk
@@ -8,7 +8,6 @@ from tkinter import messagebox
 from tkinter.filedialog import askdirectory, askopenfilename
 from datetime import date, datetime
 from controle_de_validade.layout_pdf import Relatorios
-from controle_de_validade.calendar_widget import CalendarWidget
 from controle_de_validade.dataBase import DataBase
 import pandas as pd
 import time
@@ -31,14 +30,14 @@ class validadorEntradas:
             return False
         return 0 <= value <= 10000000
 
-class TelaPrincipal(validadorEntradas, CalendarWidget):
+class TelaPrincipal(validadorEntradas):
 
     def __init__(self) -> None:
         self.root = root
-        self.imagem_layout()
+        self.imagens_layout()
         self.valida_entradas()
+        self.lista_campos()
         self.info_usuario = {}
-        self.date_time = {}
         self.usuario_logado = ''
         self.matricula_logado = ''
         self.acesso_logado = ''
@@ -47,16 +46,19 @@ class TelaPrincipal(validadorEntradas, CalendarWidget):
         self.diretorio_bd = ''
         self.valor_rec_minimo = 0
         self.valor_ale_comercial = 0
-        self.lista_valida_comp_tela_inicial: list = []
-        self.lista_valida_comp_config: list = []
-        self.lista_valida_comp_produtos: list = []
-        self.lista_valida_comp_usuario: list = []
         self.data_recebimento = datetime.now().date()
         self.start()
         self.root.mainloop()
 
     def start(self):
         self.tela()
+
+    def lista_campos(self):
+        self.lista_valida_comp_tela_inicial: list = []
+        self.lista_valida_comp_config: list = []
+        self.lista_valida_comp_produtos: list = []
+        self.lista_valida_comp_usuario: list = []
+        self.lista_valida_comp_historico: list = []
 
     def valida_entradas(self):
         self.campo_matricula = (self.root.register(self.valida_matricula),'%P')
@@ -75,9 +77,30 @@ class TelaPrincipal(validadorEntradas, CalendarWidget):
 
         return True
 
-    def widget_de_ajuda(self, tipo: int):
- 
+    def imagens_layout(self):
+        self.parentDirectory = os.path.dirname(os.path.abspath(__file__))
+        self.parentDirectory = os.path.dirname(os.path.abspath(self.parentDirectory))
+        dir_image = os.path.join(self.parentDirectory, 'image\\')
 
+        self.image_ajuda_alerta =  PhotoImage(file=dir_image + 'ajuda_alerta.png')                
+        self.image_ajuda_rec =  PhotoImage(file=dir_image +'ajuda_rec.png')   
+        self.image_ajuda_massivo =  PhotoImage(file=dir_image +'ajuda_massivo.png') 
+        self.image_config = PhotoImage(file=dir_image + 'config.png')
+        self.image_login = PhotoImage(file=dir_image + 'telaLogin.png')
+        self.image_cad_login = PhotoImage(file=dir_image + 'cadastroLogin.png')
+        self.imagem_historico = PhotoImage(file=dir_image + 'historico.png')
+        self.imagem_produtos = PhotoImage(file=dir_image + 'produtos.png')
+        self.imagem_usuarios = PhotoImage(file=dir_image + 'usuarios.png')
+        self.imagem_v_senha = PhotoImage(file=dir_image + 'verSenha.png')
+        self.imagem_acesso = PhotoImage(file=dir_image + 'p_acesso.png')
+        self.imagem_tela = PhotoImage(file=dir_image + 'tela1.png')
+        self.imagem_tela = PhotoImage(file=dir_image +'tela1.png')
+        self.imagem_pesquisa = PhotoImage(file=dir_image +'pesquisar.png',width=64,height=30)
+        self.imagem_excel = PhotoImage(file=dir_image + 'b_excel.png')
+        self.imagem_ficha = PhotoImage(file=dir_image + 'g_ficha.png')
+
+    def widget_de_ajuda(self, tipo: int):
+  
         if tipo == 1:
             self.lb_image_ajuda = Label(self.root,image=self.image_ajuda_rec)
             self.lb_image_ajuda.place(x=1011, y=467, width=300, height=188)
@@ -87,26 +110,6 @@ class TelaPrincipal(validadorEntradas, CalendarWidget):
         elif tipo == 3:
             self.lb_image_ajuda = Label(self.root,image=self.image_ajuda_massivo)
             self.lb_image_ajuda.place(x=277, y=391, width=300, height=188)
-
-    def imagem_layout(self):
-        self.parentDirectory = os.path.dirname(os.path.abspath(__file__))
-        self.parentDirectory = os.path.dirname(self.parentDirectory)
-        dir_image = os.path.join(self.parentDirectory, 'image\\')
-        self.imagem_tela = PhotoImage(file = dir_image + 'tela1.png')
-        self.imagem_pesquisa = PhotoImage(file = dir_image + 'pesquisar.png',width=64,height=30)
-        self.image_config = PhotoImage(file = dir_image + 'config.png')
-        self.image_login = PhotoImage(file = dir_image + 'telaLogin.png')
-        self.image_cad_login = PhotoImage(file = dir_image + 'cadastroLogin.png')
-        self.imagem_historico = PhotoImage(file = dir_image + 'historico.png')
-        self.imagem_excel = PhotoImage(file = dir_image + 'b_excel.png')
-        self.imagem_ficha = PhotoImage(file = dir_image + 'g_ficha.png')
-        self.imagem_produtos = PhotoImage(file = dir_image + 'produtos.png')
-        self.imagem_usuarios = PhotoImage(file = dir_image + 'usuarios.png')
-        self.imagem_v_senha = PhotoImage(file = dir_image + 'verSenha.png')
-        self.imagem_acesso = PhotoImage(file = dir_image + 'p_acesso.png')
-        self.image_ajuda_alerta =  PhotoImage(file = dir_image + 'ajuda_alerta.png')                
-        self.image_ajuda_rec =  PhotoImage(file = dir_image + 'ajuda_rec.png')   
-        self.image_ajuda_massivo =  PhotoImage(file = dir_image + 'ajuda_massivo.png')  
 
     def centralizacao_tela(self,largura, altura,root):
         param = []
@@ -128,8 +131,8 @@ class TelaPrincipal(validadorEntradas, CalendarWidget):
         if tipo == 1:
             self.rec_minimo.set('')
             self.alerta_comercial.set('')
-            self.dta_fab._set_text('')
-            self.dta_venc._set_text('')
+            self.dta_fab.delete(0, END)
+            self.dta_venc.delete(0, END)
             self.numSku.set('')
             self.descri_produto.set('')
             self.categoria.set('')
@@ -140,8 +143,8 @@ class TelaPrincipal(validadorEntradas, CalendarWidget):
         elif tipo == 2:
             self.rec_minimo.set('')
             self.alerta_comercial.set('')
-            self.dta_fab._set_text('')
-            self.dta_venc._set_text('')
+            self.dta_fab.delete(0, END)
+            self.dta_venc.delete(0, END)
             self.btReceber.set('Aguardando Analise...')
 
     def destroi_widget(self):
@@ -160,6 +163,7 @@ class TelaPrincipal(validadorEntradas, CalendarWidget):
                 self.txt_produto.configure(bg='#ffffff')
                 self.msg.set('')
                 self.limpa_campos(2)
+                self.configura_btn_receber()
             else:
                 self.msg.set('PRODUTO NÃO LOCALIZADO')
                 self.descri_produto.set('')
@@ -188,8 +192,8 @@ class TelaPrincipal(validadorEntradas, CalendarWidget):
         self.numSku_v = self.numSku.get()
         self.descri_produto_v = self.descri_produto.get()
         self.categoria_v = self.categoria.get()
-        self.dta_fab_v = self.dta_fab.get()
-        self.dta_venc_v = self.dta_venc.get()
+        self.dta_fab_v = self.data_fab
+        self.dta_venc_v = self.data_venc
         self.rec_minimo_v = self.r_minimo
         self.alerta_comercial_v = self.a_comercial
         self.dta_recebimento_v = self.data_recebimento
@@ -199,12 +203,11 @@ class TelaPrincipal(validadorEntradas, CalendarWidget):
         self.receber_v = self.btReceber.get()
 
     def relogio(self):
-        pass
-        # hora = time.strftime('%H')
-        # min = time.strftime('%M')
-        # seg = time.strftime('%S')
-        # self.relogio_h.config(text=hora + ':' + min + ':' + seg)
-        # self.relogio_h.after(1000,self.relogio)
+        hora = time.strftime('%H')
+        min = time.strftime('%M')
+        seg = time.strftime('%S')
+        self.relogio_h.config(text=hora + ':' + min + ':' + seg)
+        self.relogio_h.after(1000,self.relogio)
 
     def gerar_pdf(self):
             self.variaveis_tela_inicial()
@@ -230,9 +233,14 @@ class TelaPrincipal(validadorEntradas, CalendarWidget):
 
     def executa_calculos(self):
         
+            f_data_fab = datetime.strptime(str(self.dta_fab.get()),'%d/%m/%Y')
+            f_data_fab = datetime.strftime(f_data_fab,'%Y-%m-%d')
+            f_data_venc = datetime.strptime(str(self.dta_venc.get()),'%d/%m/%Y')
+            f_data_venc = datetime.strftime(f_data_venc,'%Y-%m-%d')
+
             self.status_recebimento: str = ''
-            self.data_fab = datetime.strptime(self.dta_fab.get(), '%d/%m/%Y').date()
-            self.data_venc = datetime.strptime(self.dta_venc.get(), '%d/%m/%Y').date() 
+            self.data_fab = datetime.strptime(f_data_fab,'%Y-%m-%d').date()
+            self.data_venc = datetime.strptime(f_data_venc,'%Y-%m-%d').date()
             self.r_minimo = self.define_minimo_recebimento(self.data_venc, self.data_fab, self.valor_rec_minimo)
             self.a_comercial = self.define_alerta_comercial(self.data_venc, self.data_fab, self.valor_ale_comercial)
             status_rec = self.btReceber.get()
@@ -327,22 +335,16 @@ class TelaPrincipal(validadorEntradas, CalendarWidget):
         self.foraPrazo.title('Controle de Validade')
         p = self.centralizacao_tela(1440,750,self.root)
         self.root.geometry("%dx%d+%d+%d" % (p[0],p[1],p[2],p[3]))
-        self.imagem_tela = PhotoImage(file=r'..\image\tela1.png')
+        
 
     def configura_btn_receber(self):
         self.bt_receber.configure(bg='#676AA9', fg='#ffffff')
 
-    def escolhe_data(self, campo):
-        self.componentes_celendario(campo)
-
-
-
-
-
     def componentes_tela_inicial(self):
         self.destroi_widget()
-        self.lista_valida_comp_tela_inicial = []
+        self.lista_campos()
         self.carrega_dados_config()
+
         self.componentes_menu_bar()
        
         lb_image = Label(self.root,image=self.imagem_tela)
@@ -353,30 +355,25 @@ class TelaPrincipal(validadorEntradas, CalendarWidget):
         self.relogio_h.place(x=1254, y=164, width=122, height=24)
         self.relogio()
 
-        #label data
-        self.v_dta_fab = StringVar()
-        self.v_dta_venc = StringVar()
-
+       #label data
         self.dta_fab = Entry(self.root,
-                            textvariable=self.v_dta_fab,
                             font=('Poppins',20), 
                             justify='center')
 
-        self.dta_fab.bind("<1>",lambda e: self.escolhe_data(self.dta_fab))
+        self.dta_fab.bind('<1>', lambda e: self.calendario(self.dta_fab))
 
         self.dta_venc = Entry(self.root,
-                            textvariable=self.v_dta_venc,
                             font=('Poppins',20), 
                             justify='center')
 
-        self.dta_venc.bind("<1>",lambda e: self.escolhe_data(self.dta_venc))
+        self.dta_venc.bind('<1>', lambda e: self.calendario(self.dta_venc))
 
         self.dta_fab.place(x=60, y=263, width=307, height=43)
         self.dta_venc.place(x=399, y=263, width=307, height=43)
         self.lista_valida_comp_tela_inicial.append(self.dta_fab)
         self.lista_valida_comp_tela_inicial.append(self.dta_venc)
-        self.dta_fab.configure(text='')
-        self.dta_venc.configure(text='')
+        self.dta_fab.delete(0, END)
+        self.dta_venc.delete(0, END)
 
         #botões
         self.btReceber = StringVar()
@@ -494,37 +491,40 @@ class TelaPrincipal(validadorEntradas, CalendarWidget):
                     'usuario',
                     'produto',
                     'descricao',
+                    'data_fabricacao',
+                    'data_vencimento',
                     'data_min_rec',
                     'alerta_comercial',
                     'descri_status',
-                    'data_fabricacao',
-                    'data_vencimento'
+                    'status_de_recebimento'
 
         ]
         self.tr_scroll_inicial = Scrollbar(self.root)
         self.tr_vw = ttk.Treeview(self.root,columns=colunas, show='headings',yscrollcommand=self.tr_scroll_inicial.set)
         self.tr_scroll_inicial.config(command=self.tr_vw.yview)
 
-        self.tr_vw.column('id', minwidth=0, width=0)
-        self.tr_vw.column('usuario', minwidth=0, width=25)
-        self.tr_vw.column('produto', minwidth=0, width=25)
-        self.tr_vw.column('descricao', minwidth=0, width=200)
-        self.tr_vw.column('data_min_rec', minwidth=0, width=50)
-        self.tr_vw.column('alerta_comercial', minwidth=0, width=50)
-        self.tr_vw.column('descri_status', minwidth=0, width=50)
-        self.tr_vw.column('data_fabricacao', minwidth=0, width=50)
-        self.tr_vw.column('data_vencimento', minwidth=0, width=50)
+        self.tr_vw.column('id', width=0)
+        self.tr_vw.column('usuario', width=25)
+        self.tr_vw.column('produto', width=25)
+        self.tr_vw.column('descricao', width=225)
+        self.tr_vw.column('data_fabricacao', width=25)
+        self.tr_vw.column('data_vencimento', width=25)
+        self.tr_vw.column('data_min_rec', width=25)
+        self.tr_vw.column('alerta_comercial', width=25)
+        self.tr_vw.column('descri_status', width=100)
+        self.tr_vw.column('status_de_recebimento', width=25)
 
 
         self.tr_vw.heading('id',text= 'ID')
         self.tr_vw.heading('usuario',text= 'USUARIO')
         self.tr_vw.heading('produto',text= 'PRODUTO')
         self.tr_vw.heading('descricao',text= 'DESCRIÇÃO')
-        self.tr_vw.heading('data_min_rec',text= 'DATA_MIN_REC')
+        self.tr_vw.heading('data_fabricacao',text= 'FABRICAÇÃO')
+        self.tr_vw.heading('data_vencimento',text= 'VENCIMENTO')
+        self.tr_vw.heading('data_min_rec',text= 'MIN_REC')
         self.tr_vw.heading('alerta_comercial',text= 'ALERTA_COMERCIAL')
         self.tr_vw.heading('descri_status',text= 'DESCRI_STATUS')
-        self.tr_vw.heading('data_fabricacao',text= 'DATA_FABRICAÇÃO')
-        self.tr_vw.heading('data_vencimento',text= 'DATA_VENCIMENTO')
+        self.tr_vw.heading('status_de_recebimento',text= 'STATUS')
 
 
         self.tr_vw.place(x=62, y=400, width=1299, height=323)
@@ -550,7 +550,8 @@ class TelaPrincipal(validadorEntradas, CalendarWidget):
 
     def componentes_tela_config(self):
         self.destroi_widget()
-        self.lista_valida_comp_config = []
+        self.lista_campos()
+        
         self.lb_img_config = Label(self.root,image=self.image_config)
         self.lb_img_config.place(x=0, y=0)
         self.componentes_menu_bar()
@@ -727,15 +728,16 @@ class TelaPrincipal(validadorEntradas, CalendarWidget):
 
         self.btn_entrar = Button(self.root,
                                  text='Entrar',
-                                 bg='#676AA9',
+                                 bg=BT_COLOR,
                                  fg='#ffffff',
                                  justify='center',
                                  cursor='hand2',
+                                 activebackground=BT_COLOR,
                                  border=False,
                                  font=('Poppins', 25),
                                  command=lambda:self.logar_usuario(2))
 
-        self.btn_entrar.place(x=976, y=586, width=243, height=51)
+        self.btn_entrar.place(x=978, y=586, width=243, height=51)
 
     def componentes_cadastro_usuario(self):
         self.destroi_widget()     
@@ -779,7 +781,8 @@ class TelaPrincipal(validadorEntradas, CalendarWidget):
 
         self.btn_cad_entrar = Button(self.root,
                                  text='ALTERAR',
-                                 bg='#676AA9',
+                                 bg=BT_COLOR,
+                                 activebackground=BT_COLOR,
                                  fg='#ffffff',
                                  justify='center',
                                  cursor='hand2',
@@ -791,7 +794,8 @@ class TelaPrincipal(validadorEntradas, CalendarWidget):
         
     def componentes_historico(self):
         self.destroi_widget()
-
+        self.lista_campos()
+        data_rec = datetime.strftime(self.data_recebimento,'%d/%m/%Y')
 
         self.componentes_menu_bar()
         lb_image = Label(self.root,image=self.imagem_historico)
@@ -806,14 +810,21 @@ class TelaPrincipal(validadorEntradas, CalendarWidget):
                             font=('Poppins',20), 
                             justify='center')
 
+        self.dta_inicio.bind('<1>', lambda e: self.calendario(self.dta_inicio))
+        self.dta_inicio.insert(0, data_rec)
+
         self.dta_fim = Entry(self.root,
                             font=('Poppins',20), 
                             justify='center')
 
-
+        self.dta_fim.insert(0, data_rec)
+        self.dta_fim.bind('<1>', lambda e: self.calendario(self.dta_fim))
 
         self.dta_inicio.place(x=180, y=92, width=157, height=43)
         self.dta_fim.place(x=462, y=92, width=157, height=43)
+
+        self.lista_valida_comp_historico.append(self.dta_inicio)
+        self.lista_valida_comp_historico.append(self.dta_fim)
 
         self.bt_pesquisa_data = Button(self.root,
                             text='PESQUISAR',
@@ -824,7 +835,21 @@ class TelaPrincipal(validadorEntradas, CalendarWidget):
                             compound=LEFT,
                             justify='left',
                             border=False,
-                            command=lambda:self.popular_tabela_historico(self.dta_inicio.get(),self.dta_fim.get()))
+                            command=lambda:self.popular_tabela_historico(
+                                        self.dta_inicio.get(),
+                                        self.dta_fim.get()
+                                        ))
+
+        self.bt_delete_registro = Button(self.root,
+                            text='DELETAR',
+                            cursor='hand2',
+                            font=('Poppins', 15),
+                            bg='#676AA9',
+                            fg='#ffffff',
+                            compound=LEFT,
+                            justify='left',
+                            border=False,
+                            command=lambda:self.deletar_registro_historico())
 
         self.bt_gera_pdf = Button(self.root,
                             cursor='hand2',
@@ -841,13 +866,16 @@ class TelaPrincipal(validadorEntradas, CalendarWidget):
                             border=False,
                             image=self.imagem_excel,
                             command=lambda:self.gerar_relatorio_rec(
-                                    self.dta_inicio.get(),
-                                    self.dta_fim.get()
+                                    datetime.strptime(self.dta_inicio.get(),'%Y-%m-%d').date(),
+                                    datetime.strptime(self.dta_fim.get(),'%Y-%m-%d').date()
                                     ))
 
         self.bt_pesquisa_data.place(x=683, y=92, width=169, height=43)
         self.bt_gera_pdf.place(x=1260, y=92, width=51, height=51)
         self.bt_gera_rel.place(x=1339, y=92, width=51, height=51)
+        if self.info_usuario['acesso']=='NIVEL 2':
+            self.bt_delete_registro.place(x=1033, y=92, width=169, height=43)
+
 
         #tabela
         colunas = [
@@ -857,13 +885,13 @@ class TelaPrincipal(validadorEntradas, CalendarWidget):
                     'produto',
                     'descricao',
                     'categoria',
+                    'data_recebimento',
+                    'hora_recebimento',
+                    'data_fabricacao',
+                    'data_vencimento',
                     'data_min_rec',
                     'alerta_comercial',
                     'descri_status',
-                    'data_fabricacao',
-                    'data_vencimento',
-                    'data_recebimento',
-                    'hora_recebimento',
                     'status_de_recebimento'
 
         ]
@@ -878,13 +906,13 @@ class TelaPrincipal(validadorEntradas, CalendarWidget):
         self.tr_vw_historico.column('produto', width=25)
         self.tr_vw_historico.column('descricao', width=200)
         self.tr_vw_historico.column('categoria', width=50)
+        self.tr_vw_historico.column('data_recebimento', width=50)
+        self.tr_vw_historico.column('hora_recebimento', width=50)
+        self.tr_vw_historico.column('data_fabricacao', width=50)
+        self.tr_vw_historico.column('data_vencimento', width=50)
         self.tr_vw_historico.column('data_min_rec', width=50)
         self.tr_vw_historico.column('alerta_comercial', width=50)
         self.tr_vw_historico.column('descri_status', width=50)
-        self.tr_vw_historico.column('data_fabricacao', width=50)
-        self.tr_vw_historico.column('data_vencimento', width=50)
-        self.tr_vw_historico.column('data_recebimento', width=50)
-        self.tr_vw_historico.column('hora_recebimento', width=50)
         self.tr_vw_historico.column('status_de_recebimento', width=50)
 
 
@@ -894,18 +922,19 @@ class TelaPrincipal(validadorEntradas, CalendarWidget):
         self.tr_vw_historico.heading('produto',text= 'PRODUTO')
         self.tr_vw_historico.heading('descricao',text= 'DESCRIÇÃO')
         self.tr_vw_historico.heading('categoria',text= 'CATEGORIA')
-        self.tr_vw_historico.heading('data_min_rec',text= 'DATA_MIN_REC')
-        self.tr_vw_historico.heading('alerta_comercial',text= 'ALERTA_COMERCIAL')
-        self.tr_vw_historico.heading('descri_status',text= 'DESCRI_STATUS')
-        self.tr_vw_historico.heading('data_fabricacao',text= 'DATA_FABRICAÇÃO')
-        self.tr_vw_historico.heading('data_vencimento',text= 'DATA_VENCIMENTO')
         self.tr_vw_historico.heading('data_recebimento',text= 'DATA_RECEBIMENTO')
         self.tr_vw_historico.heading('hora_recebimento',text= 'HORA_RECEBIMENTO')
+        self.tr_vw_historico.heading('data_fabricacao',text= 'FABRICAÇÃO')
+        self.tr_vw_historico.heading('data_vencimento',text= 'VENCIMENTO')
+        self.tr_vw_historico.heading('data_min_rec',text= 'MIN_REC')
+        self.tr_vw_historico.heading('alerta_comercial',text= 'ALERTA_COMERCIAL')
+        self.tr_vw_historico.heading('descri_status',text= 'DESCRI_STATUS')
         self.tr_vw_historico.heading('status_de_recebimento',text= 'STATUS_RECEBIMENTO')
 
         self.tr_vw_historico.place(x=62, y=171, width=1303, height=552)
         self.tr_scroll.place(x=1365, y=171, width=25, height=552)
-        self.popular_tabela_historico(self.data_recebimento, self.data_recebimento)
+        
+        self.popular_tabela_historico(data_rec, data_rec)
 
         self.style_treeview()
 
@@ -920,7 +949,7 @@ class TelaPrincipal(validadorEntradas, CalendarWidget):
 
         self.componentes_menu_bar()
 
-
+        
         lb_image = Label(self.root,image=self.imagem_produtos)
         lb_image.place(x=0, y=0)
 
@@ -1328,11 +1357,15 @@ class TelaPrincipal(validadorEntradas, CalendarWidget):
         p = self.centralizacao_tela(1440,750,self.root)
         self.root.geometry("%dx%d+%d+%d" % (p[0],p[1],p[2],p[3]))
 
-        # if self.validando_primeiro_acesso():
-        #     self.componentes_primeiro_acesso()
-        #     self.info_usuario['acesso'] = 'NIVEL 2'
-        # else:
-        self.componentes_login_usuario()
+        if self.validando_primeiro_acesso():
+            self.componentes_primeiro_acesso()
+            self.info_usuario['acesso'] = 'NIVEL 2'
+            bd = DataBase(1)
+            sql ="""UPDATE tb_primeiro_acesso SET valor = 1 WHERE id = 1"""
+            bd.update(sql)
+        else:
+            self.componentes_login_usuario()
+
 
     def insere_registros_rec(self):
         self.variaveis_tela_inicial()
@@ -1370,11 +1403,12 @@ class TelaPrincipal(validadorEntradas, CalendarWidget):
                     conferente,
                     produto,
                     descricao,
+                    data_fabricacao,
+                    data_vencimento,
                     data_min_rec,
                     alerta_comercial,
                     descri_status,
-                    data_fabricacao,
-                    data_vencimento
+                    status_de_recebimento
                 FROM tb_dataBase WHERE data_recebimento = '{}' ORDER BY id DESC """.format(datetime.now().date())
 
         dados_rec = bd.selectAll(sql)
@@ -1392,13 +1426,13 @@ class TelaPrincipal(validadorEntradas, CalendarWidget):
                         produto,
                         descricao,
                         categoria,
+                        data_recebimento,
+                        hora_recebimento,
+                        data_fabricacao,
+                        data_vencimento,
                         data_min_rec,
                         alerta_comercial,
                         descri_status,
-                        data_fabricacao,
-                        data_vencimento,
-                        data_recebimento,
-                        hora_recebimento,
                         status_de_recebimento,
                         percent_rec_minimo,
                         percent_ale_comercial            
@@ -1431,13 +1465,38 @@ class TelaPrincipal(validadorEntradas, CalendarWidget):
             return
             
     def popular_tabela_historico(self,dtaInicio:date, dtaFim: date):
-            dados_rec = self.select_dados_historico(dtaInicio, dtaFim)
-            self.tr_vw_historico.delete(*self.tr_vw_historico.get_children())
-            try:
-                for dados in dados_rec:
-                    self.tr_vw_historico.insert('','end',values=dados)
-            except:
-                pass
+            if isstring(dtaInicio) :
+                dta_inicio = datetime.strptime(dtaInicio,'%d/%m/%Y').date()
+                dtaInicio = datetime.strftime(dta_inicio,'%Y-%m-%d')
+                dta_fim = datetime.strptime(dtaFim,'%d/%m/%Y').date()
+                dtaFim = datetime.strftime(dta_fim,'%Y-%m-%d')
+            
+
+            if self.valida_campos_vazios(self.lista_valida_comp_historico):
+                dados_rec = self.select_dados_historico(dta_inicio, dta_fim)
+                self.tr_vw_historico.delete(*self.tr_vw_historico.get_children())
+                try:
+                    for dados in dados_rec:
+                        self.tr_vw_historico.insert('','end',values=dados)
+                except:
+                    pass
+
+    def deletar_registro_historico(self):
+        if self.valida_campos_vazios(self.lista_valida_comp_historico):
+            self.tr_vw_historico.selection()
+            lista = [self.tr_vw_historico.item(n, 'values') for n in self.tr_vw_historico.selection()]
+            id = lista[0][0]
+            opc = messagebox.askyesnocancel('Deletar Registro',F'Confirmar exclusão do registro?')
+
+            if opc:
+                sql = """DELETE FROM tb_dataBase WHERE id = {}""".format(id)
+                bd = DataBase(2)
+                bd.delete(sql)
+                self.popular_tabela_historico(
+                                        datetime.strptime(self.dta_inicio.get(),'%Y-%m-%d').date(),
+                                         datetime.strptime(self.dta_fim.get(),'%Y-%m-%d').date())
+            
+
 
     def popular_tabela_produtos(self, lista_dados:list =[]):
         if lista_dados:
@@ -1461,11 +1520,11 @@ class TelaPrincipal(validadorEntradas, CalendarWidget):
                                         numSku = valores[3],
                                         descri_produto = valores[4],
                                         categoria = valores[5],
-                                        dta_fab = valores[9],
-                                        dta_venc = valores[10],
-                                        rec_minimo = valores[6],
-                                        alerta_comercial = valores[7],
-                                        dta_recebimento = valores[11],
+                                        dta_fab = valores[8],
+                                        dta_venc = valores[9],
+                                        rec_minimo = valores[10],
+                                        alerta_comercial = valores[11],
+                                        dta_recebimento = valores[6],
                                         usuario = valores[2],
                                         matricula = valores[1],
                                         nome_arquivo = self.nome_saida_pdf
@@ -1525,8 +1584,23 @@ class TelaPrincipal(validadorEntradas, CalendarWidget):
                 nome_relatorio = lista_acesso[0]
                 nome_pdf = lista_acesso[1]
                 dir_bd = lista_acesso[2]    
-                scl_alert_comercial = lista_acesso[3]
-                scl_rec_minimo = lista_acesso[4]
+                scl_rec_minimo = lista_acesso[3]
+                scl_alert_comercial = lista_acesso[4]
+
+                if self.valida_campos_vazios(self.lista_valida_comp_config) or len(lista_acesso)> 0:
+                    sql = """UPDATE tb_config SET dir_bd = '{}', nome_pdf = '{}', nome_rel = '{}' WHERE id = 1
+                            """.format(dir_bd, nome_pdf, nome_relatorio)
+                    bd = DataBase(1)
+                    bd.update(sql)
+
+                # if scl_rec_minimo <= scl_alert_comercial:
+                #     messagebox.showwarning('Erro de Periodo','Recebimento minimo menor que alerta Comercial.')
+                # elif scl_rec_minimo == 0 or scl_alert_comercial == 0:
+                #     messagebox.showwarning('Erro de Periodo','Defina valores Maiores que 0.')
+                # else:
+                #     sql2 = """UPDATE tb_periodo_rec SET r_minimo = {}, a_comercial = {} WHERE id = 1""".format(scl_rec_minimo, scl_alert_comercial)
+                #     bd = DataBase(2)
+                #     bd.update(sql2)
             else:
 
                 nome_relatorio = self.nome_relatorio.get()
@@ -1535,20 +1609,20 @@ class TelaPrincipal(validadorEntradas, CalendarWidget):
                 scl_alert_comercial = self.scl_alert_comercial.get()
                 scl_rec_minimo = self.scl_rec_minimo.get()
 
-            if self.valida_campos_vazios(self.lista_valida_comp_config) or len(lista_acesso)> 0:
-                sql = """UPDATE tb_config SET dir_bd = '{}', nome_pdf = '{}', nome_rel = '{}' WHERE id = 1
-                        """.format(dir_bd, nome_pdf, nome_relatorio)
-                bd = DataBase(1)
-                bd.update(sql)
+                if self.valida_campos_vazios(self.lista_valida_comp_config) or len(lista_acesso)> 0:
+                    sql = """UPDATE tb_config SET dir_bd = '{}', nome_pdf = '{}', nome_rel = '{}' WHERE id = 1
+                            """.format(dir_bd, nome_pdf, nome_relatorio)
+                    bd = DataBase(1)
+                    bd.update(sql)
 
-            if scl_rec_minimo <= scl_alert_comercial:
-                messagebox.showwarning('Erro de Periodo','Recebimento minimo menor que alerta Comercial.')
-            elif scl_rec_minimo == 0 or scl_alert_comercial == 0:
-                messagebox.showwarning('Erro de Periodo','Defina valores Maiores que 0.')
-            else:
-                sql2 = """UPDATE tb_periodo_rec SET r_minimo = {}, a_comercial = {} WHERE id = 1""".format(scl_rec_minimo, scl_alert_comercial)
-                bd = DataBase(2)
-                bd.update(sql2)
+                if scl_rec_minimo <= scl_alert_comercial:
+                    messagebox.showwarning('Erro de Periodo','Recebimento minimo menor que alerta Comercial.')
+                elif scl_rec_minimo == 0 or scl_alert_comercial == 0:
+                    messagebox.showwarning('Erro de Periodo','Defina valores Maiores que 0.')
+                else:
+                    sql2 = """UPDATE tb_periodo_rec SET r_minimo = {}, a_comercial = {} WHERE id = 1""".format(scl_rec_minimo, scl_alert_comercial)
+                    bd = DataBase(2)
+                    bd.update(sql2)
 
             self.carrega_dados_config()
 
@@ -1880,7 +1954,7 @@ class TelaPrincipal(validadorEntradas, CalendarWidget):
 
         if opc:
             try:
-                diretorio = askdirectory()
+                diretorio = askopenfilename()
                 bd = DataBase(2)
                 caminho_dir = os.path.dirname(diretorio)
                 v_conexao = bd.teste_de_conexao(diretorio)
@@ -1896,17 +1970,15 @@ class TelaPrincipal(validadorEntradas, CalendarWidget):
                 pass
 
     def primeiro_login_acesso(self):
-        opc = messagebox.askyesnocancel('Banco de Dados', 'Localize o banco de dados para continuar.')
+        opc = messagebox.askyesnocancel('Banco de Dados', 'Localize o banco com o nome de "'"dataBaseGlobal.db"'" para continuar.')
 
         if opc:
             try:
-                diretorio = askdirectory()
+                diretorio = askopenfilename()
                 bd = DataBase(2)
                 caminho_dir = os.path.dirname(diretorio)
                 v_conexao = bd.teste_de_conexao(diretorio)
                 if v_conexao:
-                    # lista_acesso = ['RELATÓRIO_REC', 'PDF', caminho_dir, 75, 25]
-                    # self.atualiza_dados_config(lista_acesso)
                     sql = """UPDATE tb_config SET dir_bd = '{}', nome_pdf = '{}', nome_rel = '{}' WHERE id = 1
                             """.format(caminho_dir, 'PDF', 'RELATÓRIO_REC')
                     bd = DataBase(1)
@@ -1973,9 +2045,13 @@ class TelaPrincipal(validadorEntradas, CalendarWidget):
         self.componentes_login_usuario()
 
     #calendario
+    def calendario(self, campo):
+        self.componentes_celendario(campo)
+
     def componentes_celendario(self, campo):
         self.master = Toplevel(self.root)
         self.master.title('Calendar')
+        self.master.grab_set()
         self.master.geometry('300x275+200+100')
         self.master.resizable(False, False)
  
@@ -2161,8 +2237,6 @@ class TelaPrincipal(validadorEntradas, CalendarWidget):
         date = month + '/' + day + '/' + year
         self._date = date
 
-
-    
     def _select_date_time(self, campo):
         '''Creates and saves a dictionary of date and time.
         
@@ -2199,7 +2273,7 @@ class TelaPrincipal(validadorEntradas, CalendarWidget):
             campo.delete(0, END)
             campo.insert(0, nova_data)
 
-    
+
     def get_date_time(self):
         '''Returns a dictionary of date and time elements'''
         print('get_date_time', self.date_time)
