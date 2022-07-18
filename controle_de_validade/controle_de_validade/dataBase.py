@@ -4,7 +4,8 @@ import sqlite3 as sq
 
 class DataBase:
     def __init__(self, tipo: int) -> None:
-        self.parentDirectory = os.path.dirname(os.getcwd())
+        self.parentDirectory = os.path.dirname(os.path.abspath(__file__))
+        self.parentDirectory = os.path.dirname(self.parentDirectory)
         dir_data = os.path.join(self.parentDirectory, 'data\\')
 
         self.dblocal = dir_data + 'dataBaseLocal.db'

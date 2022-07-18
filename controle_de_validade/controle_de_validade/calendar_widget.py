@@ -11,7 +11,7 @@ import datetime
  
 from tkinter import *
 from tkinter import ttk
-from types import ModuleType
+
  
  
 class CalendarWidget:
@@ -74,7 +74,11 @@ class CalendarWidget:
  
         ttk.Button(master, text='Select', command=self._select_date_time, \
             style='Select.TButton')\
-            .place(x=360, y=226, width=120, height=40)
+            .place(x=106, y=245, width=120, height=40)
+
+
+
+
  
     def _get_month_names(self):
         '''Returns list of month names'''
@@ -234,15 +238,13 @@ class CalendarWidget:
         date = month + '/' + day + '/' + year
         self._date = date
 
-    def select_data(self):
-        dados = self._select_date_time()
-
+    
     def _select_date_time(self):
         '''Creates and saves a dictionary of date and time.
         
         After a dictionary is created the window is closed.
         '''
- 
+        
         month = self._month_combobox.get()
         year = self._year_combobox.get()
  
@@ -266,14 +268,15 @@ class CalendarWidget:
             date_time['year'] = year
             date_time['day'] = day
  
- 
+            print(date_time)
             self.date_time = date_time
+
             self.master.destroy()
-            return self.date_time
+            # return self.date_time
     
     def get_date_time(self):
         '''Returns a dictionary of date and time elements'''
- 
+        print('get_date_time', self.date_time)
         return self.date_time
 
 if __name__ == '__main__':

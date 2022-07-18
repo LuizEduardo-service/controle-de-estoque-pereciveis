@@ -6,7 +6,6 @@ from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
 from tkinter.filedialog import askdirectory, askopenfilename
-from tkcalendar import DateEntry
 from datetime import date, datetime
 from controle_de_validade.layout_pdf import Relatorios
 from controle_de_validade.calendar_widget import CalendarWidget
@@ -32,12 +31,14 @@ class validadorEntradas:
             return False
         return 0 <= value <= 10000000
 
-class TelaPrincipal(validadorEntradas):
+class TelaPrincipal(validadorEntradas, CalendarWidget):
 
     def __init__(self) -> None:
         self.root = root
+        self.imagem_layout()
         self.valida_entradas()
         self.info_usuario = {}
+        self.date_time = {}
         self.usuario_logado = ''
         self.matricula_logado = ''
         self.acesso_logado = ''
@@ -75,9 +76,7 @@ class TelaPrincipal(validadorEntradas):
         return True
 
     def widget_de_ajuda(self, tipo: int):
-        self.image_ajuda_alerta =  PhotoImage(file=r'../image/ajuda_alerta.png')                
-        self.image_ajuda_rec =  PhotoImage(file=r'../image/ajuda_rec.png')   
-        self.image_ajuda_massivo =  PhotoImage(file=r'../image/ajuda_massivo.png')   
+ 
 
         if tipo == 1:
             self.lb_image_ajuda = Label(self.root,image=self.image_ajuda_rec)
@@ -89,6 +88,25 @@ class TelaPrincipal(validadorEntradas):
             self.lb_image_ajuda = Label(self.root,image=self.image_ajuda_massivo)
             self.lb_image_ajuda.place(x=277, y=391, width=300, height=188)
 
+    def imagem_layout(self):
+        self.parentDirectory = os.path.dirname(os.path.abspath(__file__))
+        self.parentDirectory = os.path.dirname(self.parentDirectory)
+        dir_image = os.path.join(self.parentDirectory, 'image\\')
+        self.imagem_tela = PhotoImage(file = dir_image + 'tela1.png')
+        self.imagem_pesquisa = PhotoImage(file = dir_image + 'pesquisar.png',width=64,height=30)
+        self.image_config = PhotoImage(file = dir_image + 'config.png')
+        self.image_login = PhotoImage(file = dir_image + 'telaLogin.png')
+        self.image_cad_login = PhotoImage(file = dir_image + 'cadastroLogin.png')
+        self.imagem_historico = PhotoImage(file = dir_image + 'historico.png')
+        self.imagem_excel = PhotoImage(file = dir_image + 'b_excel.png')
+        self.imagem_ficha = PhotoImage(file = dir_image + 'g_ficha.png')
+        self.imagem_produtos = PhotoImage(file = dir_image + 'produtos.png')
+        self.imagem_usuarios = PhotoImage(file = dir_image + 'usuarios.png')
+        self.imagem_v_senha = PhotoImage(file = dir_image + 'verSenha.png')
+        self.imagem_acesso = PhotoImage(file = dir_image + 'p_acesso.png')
+        self.image_ajuda_alerta =  PhotoImage(file = dir_image + 'ajuda_alerta.png')                
+        self.image_ajuda_rec =  PhotoImage(file = dir_image + 'ajuda_rec.png')   
+        self.image_ajuda_massivo =  PhotoImage(file = dir_image + 'ajuda_massivo.png')  
 
     def centralizacao_tela(self,largura, altura,root):
         param = []
@@ -181,11 +199,12 @@ class TelaPrincipal(validadorEntradas):
         self.receber_v = self.btReceber.get()
 
     def relogio(self):
-        hora = time.strftime('%H')
-        min = time.strftime('%M')
-        seg = time.strftime('%S')
-        self.relogio_h.config(text=hora + ':' + min + ':' + seg)
-        self.relogio_h.after(1000,self.relogio)
+        pass
+        # hora = time.strftime('%H')
+        # min = time.strftime('%M')
+        # seg = time.strftime('%S')
+        # self.relogio_h.config(text=hora + ':' + min + ':' + seg)
+        # self.relogio_h.after(1000,self.relogio)
 
     def gerar_pdf(self):
             self.variaveis_tela_inicial()
@@ -212,8 +231,8 @@ class TelaPrincipal(validadorEntradas):
     def executa_calculos(self):
         
             self.status_recebimento: str = ''
-            self.data_fab = self.dta_fab.get()
-            self.data_venc = self.dta_venc.get()
+            self.data_fab = datetime.strptime(self.dta_fab.get(), '%d/%m/%Y').date()
+            self.data_venc = datetime.strptime(self.dta_venc.get(), '%d/%m/%Y').date() 
             self.r_minimo = self.define_minimo_recebimento(self.data_venc, self.data_fab, self.valor_rec_minimo)
             self.a_comercial = self.define_alerta_comercial(self.data_venc, self.data_fab, self.valor_ale_comercial)
             status_rec = self.btReceber.get()
@@ -314,11 +333,9 @@ class TelaPrincipal(validadorEntradas):
         self.bt_receber.configure(bg='#676AA9', fg='#ffffff')
 
     def escolhe_data(self, campo):
-        self.calendario = Toplevel(self.root)
-        data = CalendarWidget(self.calendario)
-        resultado = data._select_date_time()
-        print(resultado)
-        campo.set(resultado)
+        self.componentes_celendario(campo)
+
+
 
 
 
@@ -326,8 +343,6 @@ class TelaPrincipal(validadorEntradas):
         self.destroi_widget()
         self.lista_valida_comp_tela_inicial = []
         self.carrega_dados_config()
-        self.imagem_tela = PhotoImage(file=r'..\image\tela1.png')
-        self.imagem_pesquisa = PhotoImage(file=r'..\image\pesquisar.png',width=64,height=30)
         self.componentes_menu_bar()
        
         lb_image = Label(self.root,image=self.imagem_tela)
@@ -347,14 +362,14 @@ class TelaPrincipal(validadorEntradas):
                             font=('Poppins',20), 
                             justify='center')
 
-        self.dta_fab.bind("<1>",lambda e: self.escolhe_data(self.v_dta_fab))
+        self.dta_fab.bind("<1>",lambda e: self.escolhe_data(self.dta_fab))
 
         self.dta_venc = Entry(self.root,
                             textvariable=self.v_dta_venc,
                             font=('Poppins',20), 
                             justify='center')
 
-        self.dta_venc.bind("<1>",lambda e: self.escolhe_data(self.v_dta_venc))
+        self.dta_venc.bind("<1>",lambda e: self.escolhe_data(self.dta_venc))
 
         self.dta_fab.place(x=60, y=263, width=307, height=43)
         self.dta_venc.place(x=399, y=263, width=307, height=43)
@@ -536,7 +551,6 @@ class TelaPrincipal(validadorEntradas):
     def componentes_tela_config(self):
         self.destroi_widget()
         self.lista_valida_comp_config = []
-        self.image_config = PhotoImage(file=r'../image/config.png')
         self.lb_img_config = Label(self.root,image=self.image_config)
         self.lb_img_config.place(x=0, y=0)
         self.componentes_menu_bar()
@@ -684,7 +698,7 @@ class TelaPrincipal(validadorEntradas):
 
     def componentes_login_usuario(self):
         self.destroi_widget()
-        self.image_login = PhotoImage(file=r'../image/telaLogin.png')
+        
         self.lb_img_login = Label(self.root,image=self.image_login)
         self.lb_img_login.place(x=0, y=0)
        
@@ -725,7 +739,7 @@ class TelaPrincipal(validadorEntradas):
 
     def componentes_cadastro_usuario(self):
         self.destroi_widget()     
-        self.image_cad_login = PhotoImage(file=r'../image/cadastroLogin.png')
+        
         self.lb_cad_login = Label(self.root,image=self.image_cad_login)
         self.lb_cad_login.place(x=0, y=0)
        
@@ -777,9 +791,7 @@ class TelaPrincipal(validadorEntradas):
         
     def componentes_historico(self):
         self.destroi_widget()
-        self.imagem_historico = PhotoImage(file=r'..\image\historico.png')
-        self.imagem_excel = PhotoImage(file=r'..\image\b_excel.png')
-        self.imagem_ficha = PhotoImage(file=r'..\image\g_ficha.png')
+
 
         self.componentes_menu_bar()
         lb_image = Label(self.root,image=self.imagem_historico)
@@ -908,7 +920,7 @@ class TelaPrincipal(validadorEntradas):
 
         self.componentes_menu_bar()
 
-        self.imagem_produtos = PhotoImage(file=r'..\image\produtos.png')
+
         lb_image = Label(self.root,image=self.imagem_produtos)
         lb_image.place(x=0, y=0)
 
@@ -1050,8 +1062,7 @@ class TelaPrincipal(validadorEntradas):
         if primeiro_acesso:
             self.componentes_menu_bar()
 
-        self.imagem_usuarios = PhotoImage(file=r'..\image\usuarios.png')
-        self.imagem_v_senha = PhotoImage(file=r'..\image\verSenha.png')
+
         lb_image = Label(self.root,image=self.imagem_usuarios)
         lb_image.place(x=0, y=0)
 
@@ -1240,7 +1251,7 @@ class TelaPrincipal(validadorEntradas):
             
     def componentes_primeiro_acesso(self):
         self.destroi_widget()
-        self.imagem_acesso = PhotoImage(file=r'..\image\p_acesso.png')
+        
         lb_image = Label(self.root,image=self.imagem_acesso)
         lb_image.place(x=0, y=0)
 
@@ -1960,6 +1971,240 @@ class TelaPrincipal(validadorEntradas):
     def inserir_primeiro_usuario(self):
         self.inserir_usuario(self.nova_senha)
         self.componentes_login_usuario()
+
+    #calendario
+    def componentes_celendario(self, campo):
+        self.master = Toplevel(self.root)
+        self.master.title('Calendar')
+        self.master.geometry('300x275+200+100')
+        self.master.resizable(False, False)
+ 
+        # App's private variables
+        self._months = self._get_month_names()
+        self._months_days = self._get_months_days_dict()
+        self._clicked_button = None
+        self._date = ''
+        self._time = ''
+        self.date_time = {}
+ 
+        # Configures style for app's widgets
+        self._configure_style()
+ 
+        ttk.Label(self.master, text='Select date and time').place(x=10, y=10)
+        ttk.Frame(self.master, height=2, borderwidth=1, relief='flat', \
+            style='Hor.TFrame')\
+            .place(x=0, y=37, width=523)
+ 
+        # Date fields
+        self._create_date_fields()
+
+ 
+        ttk.Button(self.master, text='Select', command=lambda:self._select_date_time(campo), \
+            style='Select.TButton')\
+            .place(x=106, y=245, width=120, height=40)
+ 
+    def _get_month_names(self):
+        '''Returns list of month names'''
+ 
+        return ('Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', \
+            'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro')
+    
+    def _get_months_days_dict(self):
+        '''
+        Returns a dictionary where keys are months and values are their
+        number of days
+        '''
+ 
+        months_days = {}
+        months_days['Janeiro'] = 31
+        months_days['Fevereiro'] = 28
+        months_days['Março'] = 31
+        months_days['Abril'] = 30
+        months_days['Maio'] = 31
+        months_days['Junho'] = 30
+        months_days['Julho'] = 31
+        months_days['Agosto'] = 31
+        months_days['Setembro'] = 30
+        months_days['Outubro'] = 31
+        months_days['Novembro'] = 30
+        months_days['Dezembro'] = 31
+ 
+        return months_days
+ 
+    def _configure_style(self):
+        '''Contains all style configurations'''
+ 
+        style = ttk.Style()
+ 
+        # Root window's background color
+        style.configure('TLabel', background='#e0dfde')
+        style.configure('TButton', background='#e0dfde')
+ 
+        # Custom style
+        style.configure('Hor.TFrame', background='#6a9eba')
+        style.configure('Ver.TFrame', background='#000000')
+ 
+        style.configure('TCombobox', selectbackground=[('normal', 'white')])
+        style.configure('TCombobox', selectforeground=[('normal', 'black')])
+ 
+        style.configure('Day.TButton', background='#e0dfde', relief='flat')
+        style.configure('Day.Clicked.TButton', background='#8cd0f5', \
+            relief='flat')
+        style.configure('Select.TButton', background='#6a9eba', \
+            foreground='#ffffff', font=('', 12, 'bold'))
+ 
+    def _create_date_fields(self):
+        '''Creates all relevant to date fields'''
+ 
+        # Month selection fields
+        ttk.Label(self.master, text='Month:').place(x=10, y=50)
+        self._month = StringVar()
+        month_combobox = ttk.Combobox(self.master, width=9, \
+            textvariable=self._month)
+        month_combobox.place(x=58, y=50)
+        month_combobox.bind('<<ComboboxSelected>>', self._enable_month_days)
+        self._month_combobox = month_combobox
+        self._load_months()
+ 
+        # Year selection fields
+        ttk.Label(self.master, text='Year:').place(x=183, y=50)
+        self._year = StringVar()
+        year_combobox = ttk.Combobox(self.master, width=9, \
+            textvariable=self._year)
+        year_combobox.place(x=222, y=50)
+        year_combobox.bind('<<ComboboxSelected>>', self._enable_month_days)
+        self._year_combobox = year_combobox
+        self._load_years()
+ 
+        # Days of the month buttons
+        days_buttons = []
+        days = 31
+        x = 35
+        y = 87
+        for i in range(1, days+1):
+            # Creates a button with disabled state
+            button = ttk.Button(self.master, text=str(i), style='Day.TButton')
+            button.configure(command=lambda btn=button: \
+                self._day_button_callback(btn))
+            button.place(x=x, y=y, width=35, height=35)
+            button.state(['disabled'])
+            days_buttons.append(button)
+ 
+            # Updates the x,y location
+            x += 35
+            if i % 7 == 0:
+                x = 35
+                y += 35
+        self._days_buttons = days_buttons
+ 
+ 
+    def _load_months(self):
+        '''Loads months names into combobox'''
+                
+        self._month_combobox.configure(values=self._months)
+    
+    def _load_years(self):
+        '''Loads years into combobox beggining from 1990'''
+ 
+        now = datetime.now()
+ 
+        years = [*range(now.year-10, now.year+30)]
+        years.reverse()
+        
+        self._year_combobox.configure(values=years)
+ 
+    def _enable_month_days(self, event=None):
+        '''Enables relevant days of a selected month'''
+ 
+        month = self._month_combobox.get()
+        year = self._year_combobox.get()
+ 
+        if month and year:
+            # Fields are not empty
+            days = self._months_days[month]
+ 
+            year = int(year)
+            if month == 'Fevereiro' and year % 4 == 0:
+                # Leap year - 29 days
+                days += 1
+            
+            i = 0
+            while i <= days-1:
+                # Enables days of a month
+                self._days_buttons[i].state(['!disabled'])
+                self._days_buttons[i].configure(style='Day.TButton')
+                i += 1
+            
+            while i < 31:
+                # Disables days that exceed the number of days in a month
+                self._days_buttons[i].state(['disabled'])
+                self._days_buttons[i].configure(style='Day.TButton')
+                i += 1
+     
+    def _day_button_callback(self, button):
+        '''A callback of a days of the month button'''
+ 
+        if self._clicked_button:
+            self._clicked_button.configure(style='Day.TButton')
+        
+        button.configure(style='Day.Clicked.TButton')
+        self._clicked_button = button
+ 
+        # Updates selected_date_label text
+        month = self._month_combobox.get()
+        month = str(self._months.index(month)+1)
+        day = button.cget('text')
+        year = self._year_combobox.get()
+        # if int(month) < 10: month = "0" + month 
+        # if int(day) < 10: day = "0" + day 
+
+        date = month + '/' + day + '/' + year
+        self._date = date
+
+
+    
+    def _select_date_time(self, campo):
+        '''Creates and saves a dictionary of date and time.
+        
+        After a dictionary is created the window is closed.
+        '''
+        
+        month = self._month_combobox.get()
+        year = self._year_combobox.get()
+ 
+        day = ''
+        if self._clicked_button:
+            day = self._clicked_button.cget('text')
+  
+        if month and year and day:
+        # if month and year and day and hour and minutes and seconds:
+ 
+            date_time = {}
+        
+            month = str(self._months.index(month)+1)
+            if int(month) < 10:
+                month = '0' + month
+ 
+            if int(day) < 10:
+                day = '0' + day
+ 
+            date_time['month'] = month
+            date_time['year'] = year
+            date_time['day'] = day
+ 
+            self.date_time = date_time
+            nova_data = day + '/' + month + '/' + year
+            self.master.destroy()
+            # return self.date_time
+            campo.delete(0, END)
+            campo.insert(0, nova_data)
+
+    
+    def get_date_time(self):
+        '''Returns a dictionary of date and time elements'''
+        print('get_date_time', self.date_time)
+        return self.date_time
+
 
 
 if __name__ == '__main__':

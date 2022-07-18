@@ -351,3 +351,11 @@ class CalendarWidget:
         '''Returns a dictionary of date and time elements'''
 
         return self.date_time
+
+root = Tk()
+calendar = CalendarWidget(root)
+root.mainloop()
+date_time = calendar.get_date_time()
+# the keys are: 'year', 'month', 'day', 'hours', 'minutes' and 'seconds'
+print(date_time['year'])
+print(date_time['minutes'])
