@@ -1,6 +1,7 @@
 import datetime as dt
 import os
 from reportlab.pdfgen import canvas
+from reportlab.lib. pagesizes import A4
 from reportlab.lib import colors
 import webbrowser
 import locale
@@ -17,14 +18,24 @@ class Relatorios:
         self.parentDirectory = os.path.dirname(self.fileDirectory)
         self.dir_pdf = os.path.join(self.parentDirectory, 'pdf\\')
 
-        f_data_fab = dt.datetime.strftime(kwargs.get('dta_fab'),'%Y-%m-%d')
-        f_data_venc = dt.datetime.strftime(kwargs.get('dta_venc'),'%Y-%m-%d')
+        try:
+            f_data_fab = dt.datetime.strftime(kwargs.get('dta_fab'),'%Y-%m-%d')
+            f_data_venc = dt.datetime.strftime(kwargs.get('dta_venc'),'%Y-%m-%d')
+            self.dta_fab = dt.datetime.strptime(f_data_fab,'%Y-%m-%d')
+            self.dta_venc = dt.datetime.strptime(f_data_venc,'%Y-%m-%d')
+        except TypeError:
+            f_data_fab = dt.datetime.strptime(kwargs.get('dta_fab'),'%Y-%m-%d')
+            f_data_venc = dt.datetime.strptime(kwargs.get('dta_venc'),'%Y-%m-%d')
+
+            self.dta_fab = dt.datetime.strftime(f_data_fab,'%Y-%m-%d')
+            self.dta_venc = dt.datetime.strftime(f_data_venc,'%Y-%m-%d')
+
+            self.dta_fab = dt.datetime.strptime(self.dta_fab,'%Y-%m-%d')
+            self.dta_venc = dt.datetime.strptime(self.dta_venc,'%Y-%m-%d')
 
         self.numSku = kwargs.get('numSku')
         self.descri_produto = kwargs.get('descri_produto')
         self.categoria = kwargs.get('categoria')
-        self.dta_fab = dt.datetime.strptime(f_data_fab,'%Y-%m-%d')
-        self.dta_venc = dt.datetime.strptime(f_data_venc,'%Y-%m-%d')
         self.rec_minimo = dt.datetime.strptime(str(kwargs.get('rec_minimo')),'%Y-%m-%d')
         self.alerta_comercial = dt.datetime.strptime(str(kwargs.get('alerta_comercial')),'%Y-%m-%d')
         self.dta_recebimento = dt.datetime.strptime(str(kwargs.get('dta_recebimento')),'%Y-%m-%d')
@@ -41,7 +52,7 @@ class Relatorios:
     def gerar_relatorio(self):
         FONT_PRINCIPAL = 'Helvetica-Bold'
 
-        self.c = canvas.Canvas(self.dir_pdf + self.nome_arquivo + '.pdf')
+        self.c = canvas.Canvas(self.dir_pdf + self.nome_arquivo + '.pdf',pagesize=A4)
 
 
         #faixa limite de expedição
@@ -63,6 +74,7 @@ class Relatorios:
         
 
         data_venc = dt.datetime.strftime(self.dta_venc,'%d/%m/%Y')
+
         self.c.setFont(FONT_PRINCIPAL, 30)
         self.c.setFillColor(colors.white)
         self.c.drawCentredString(x=300, y=640,text='DATA VENCIMENTO')
@@ -74,15 +86,25 @@ class Relatorios:
         #faixa sku
         self.c.setFont(FONT_PRINCIPAL, 40)
         self.c.setFillColor(colors.black)
-        self.c.drawCentredString(x=80,y=495,text='SKU:')
+        self.c.drawCentredString(x=80,y=470,text='SKU:')
+        self.c.setFont(FONT_PRINCIPAL, 20)
+
+        #descrição do produto
+        if len(self.descri_produto)> 40:
+            self.descri_produto = str(self.descri_produto)[:40]
+
+        self.c.drawCentredString(x=290, y=530, text=str(self.descri_produto).upper())
 
         self.c.setStrokeColor(colors.gray)
         self.c.setLineWidth(50)
-        self.c.line(150,510,550,510)
+        self.c.line(150,485,550,485)
+        # self.c.setStrokeColor(colors.gray)
+        # self.c.setLineWidth(50)
+        # self.c.line(150,510,550,510)
 
         self.c.setFillColor(colors.black)
         self.c.setFont(FONT_PRINCIPAL, 40)
-        self.c.drawCentredString(x=370,y=495, text= str(self.numSku))
+        self.c.drawCentredString(x=370,y=470, text= str(self.numSku))
 
         #faixa de recebimento
         self.c.setFont(FONT_PRINCIPAL, 20)
@@ -145,6 +167,19 @@ class Relatorios:
 
 
 if __name__ == '__main__':
-    pdf = Relatorios()
+    pdf = Relatorios(
+                        numSku = 12345,
+                        descri_produto = 'DESCRIÇÃO DO PRODUTO sdrbrbrber',
+                        categoria = 'BEBES',
+                        dta_fab = dt.datetime.now().date(),
+                        dta_venc = dt.datetime.now().date(),
+                        rec_minimo = dt.datetime.now().date(),
+                        alerta_comercial = dt.datetime.now().date(),
+                        dta_recebimento = dt.datetime.now().date(),
+                        usuario = 'luiz',
+                        matricula = '3896595',
+                        nome_arquivo = 'exemplo'
+
+    )
     pdf.gerar_relatorio()
 
