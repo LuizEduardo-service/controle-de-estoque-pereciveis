@@ -98,6 +98,7 @@ class TelaPrincipal(validadorEntradas):
         self.imagem_pesquisa = PhotoImage(file=dir_image +'pesquisar.png',width=64,height=30)
         self.imagem_excel = PhotoImage(file=dir_image + 'b_excel.png')
         self.imagem_ficha = PhotoImage(file=dir_image + 'g_ficha.png')
+        self.imagem_ficha = PhotoImage(file=dir_image + 'calendario.png')
 
     def widget_de_ajuda(self, tipo: int):
   
