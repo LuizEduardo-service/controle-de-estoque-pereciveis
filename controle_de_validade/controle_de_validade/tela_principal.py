@@ -1,12 +1,19 @@
 
 import os
 from sre_compile import isstring
+import sys
+
+# SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+# sys.path.append(os.path.dirname(SCRIPT_DIR))
+
+
 from time import sleep
 from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
 from tkinter.filedialog import askdirectory, askopenfilename
 from datetime import date, datetime
+# from controle_de_validade.layout_pdf import Relatorios
 from controle_de_validade.layout_pdf import Relatorios
 from controle_de_validade.dataBase import DataBase
 import pandas as pd
@@ -30,7 +37,7 @@ class validadorEntradas:
             return False
         return 0 <= value <= 10000000
 
-class TelaPrincipal(validadorEntradas):
+class TelaPrincipal(validadorEntradas, Relatorios):
 
     def __init__(self) -> None:
         self.root = root
@@ -98,7 +105,7 @@ class TelaPrincipal(validadorEntradas):
         self.imagem_pesquisa = PhotoImage(file=dir_image +'pesquisar.png',width=64,height=30)
         self.imagem_excel = PhotoImage(file=dir_image + 'b_excel.png')
         self.imagem_ficha = PhotoImage(file=dir_image + 'g_ficha.png')
-        self.imagem_ficha = PhotoImage(file=dir_image + 'calendario.png')
+        self.imagem_calendario = PhotoImage(file=dir_image + 'calendario.png')
 
     def widget_de_ajuda(self, tipo: int):
   
@@ -679,20 +686,20 @@ class TelaPrincipal(validadorEntradas):
 
     def componentes_menu_bar(self):
 
-        self.menubar = Menu(self.root)
-        self.menu = Menu(self.menubar)
-        self.menuBd = Menu(self.menubar)
-        self.menuSair = Menu(self.menubar)
+        self.menubar = Menu(self.root,tearoff=False)
+        self.menu = Menu(self.menubar,tearoff=False)
+        self.menuBd = Menu(self.menubar,tearoff=False)
+        self.menuSair = Menu(self.menubar,tearoff=False)
 
         self.menubar.add_command(label='Inicio',command=self.componentes_tela_inicial)
         self.menubar.add_command(label='Configurações',command=self.componentes_tela_config)
         self.menubar.add_command(label='Relatório',command=self.componentes_historico)
 
-        self.menubar.add_cascade(label='Banco', menu=self.menuBd)
+        self.menubar.add_cascade(label='Banco', menu=self.menuBd,)
         self.menuBd.add_command(label='Produtos', command=self.componentes_produtos)
         self.menuBd.add_command(label='Usuario', command=lambda:self.componentes_usuarios(nivelAcesso=self.info_usuario['acesso']))
 
-        self.menubar.add_cascade(label='Sair', menu=self.menuSair)
+        self.menubar.add_cascade(label='Sair', menu=self.menuSair,)
         self.menuSair.add_command(label='Logoff', command=self.logoff)
         self.menuSair.add_command(label='Fechar Aplicação', command=lambda:self.root.destroy())
 
@@ -867,8 +874,8 @@ class TelaPrincipal(validadorEntradas):
                             border=False,
                             image=self.imagem_excel,
                             command=lambda:self.gerar_relatorio_rec(
-                                    datetime.strptime(self.dta_inicio.get(),'%Y-%m-%d').date(),
-                                    datetime.strptime(self.dta_fim.get(),'%Y-%m-%d').date()
+                                    self.dta_inicio.get(),
+                                    self.dta_fim.get()
                                     ))
 
         self.bt_pesquisa_data.place(x=683, y=92, width=169, height=43)
@@ -1359,13 +1366,21 @@ class TelaPrincipal(validadorEntradas):
         self.root.geometry("%dx%d+%d+%d" % (p[0],p[1],p[2],p[3]))
 
         if self.validando_primeiro_acesso():
-            self.componentes_primeiro_acesso()
-            self.info_usuario['acesso'] = 'NIVEL 2'
-            bd = DataBase(1)
-            sql ="""UPDATE tb_primeiro_acesso SET valor = 1 WHERE id = 1"""
-            bd.update(sql)
+            try:
+                self.componentes_primeiro_acesso()
+                self.info_usuario['acesso'] = 'NIVEL 2'
+                bd = DataBase(1)
+                sql ="""UPDATE tb_primeiro_acesso SET valor = 1 WHERE id = 1"""
+                bd.update(sql)
+            except:
+                messagebox.showerror('Erro Cadastro', 'Ocorreu um erro no cadastro!\nVerifique e tente novamente')
+                bd = DataBase(1)
+                sql ="""UPDATE tb_primeiro_acesso SET valor = 0 WHERE id = 1"""
+                bd.update(sql)
+
         else:
             self.componentes_login_usuario()
+
 
 
     def insere_registros_rec(self):
@@ -1531,9 +1546,10 @@ class TelaPrincipal(validadorEntradas):
                                         nome_arquivo = self.nome_saida_pdf
 
                 )
-                gerarPdf.gerar_relatorio()       
-            except:
-                messagebox.showwarning('Itens','Nenhum item foi selecionado!')
+                gerarPdf.gerar_relatorio()    
+
+            except TypeError as err:
+                messagebox.showwarning('Itens',f'Nenhum item foi selecionado!\n\n{err}')
 
     def selecao_item_produto(self) -> list:
         item = self.tr_vw_produtos.selection()[0]
@@ -1628,17 +1644,25 @@ class TelaPrincipal(validadorEntradas):
             self.carrega_dados_config()
 
     def gerar_relatorio_rec(self, dtaInicio: date, dtaFim: date):
+
+        if isstring(dtaInicio) :
+            dta_inicio = datetime.strptime(dtaInicio,'%d/%m/%Y').date()
+            dtaInicio = datetime.strftime(dta_inicio,'%Y-%m-%d')
+            dta_fim = datetime.strptime(dtaFim,'%d/%m/%Y').date()
+            dtaFim = datetime.strftime(dta_fim,'%Y-%m-%d')
+
+
         database = self.select_dados_historico(dtaInicio, dtaFim)
         dados = pd.DataFrame(data=database)
-        dados.columns = ['ID','MATRICULA','USUARIO','PRODUTO','DESCRIÇÃO','CATEGORIA','DATA_MIN_REC',
-                        'ALERTA_COMERCIAL','DESCRI_STATUS','DATA_FABRICAÇÃO','DATA_VENCIMENTO',
-                        'DATA_RECEBIMENTO','HORA_RECEBIMENTO','STATUS_RECEBIMENTO','PERCENT_REC_MINIMO','PERCENT_ALE_COMERCIAL'
+        dados.columns = [
+                        'ID','MATRICULA','USUARIO','PRODUTO','DESCRIÇÃO','CATEGORIA','DATA_RECEBIMENTO',
+                         'HORA_RECEBIMENTO','DATA_FABRICAÇÃO','DATA_VENCIMENTO','DATA_MIN_REC', 'ALERTA_COMERCIAL',
+                         'DESCRI_STATUS','STATUS_RECEBIMENTO','PERCENT_REC_MINIMO','PERCENT_ALE_COMERCIAL'
                         ]
         colunas_datas= ['DATA_MIN_REC','ALERTA_COMERCIAL','DATA_FABRICAÇÃO','DATA_VENCIMENTO','DATA_RECEBIMENTO']
         
         dados[colunas_datas] = dados[colunas_datas].astype('datetime64[ns]')
-        dados['DATA_RECEBIMENTO']= pd.to_datetime(dados['DATA_RECEBIMENTO'],format='%d/%m/%Y')
-        # dados['DATA_RECEBIMENTO'].dt.str.__format__("%d/%m/%Y")
+
         hora_rel = time.strftime('%H%M%S')
         diretorio: str = askdirectory()
         if diretorio:
@@ -1951,7 +1975,7 @@ class TelaPrincipal(validadorEntradas):
         return self.dados_usuario
 
     def primeiro_acesso(self):
-        opc = messagebox.askyesnocancel('Banco de Dados', 'Localize o banco de dados para continuar.')
+        opc = messagebox.askyesnocancel('Banco de Dados', 'Localize o banco de dados "dataBaseGlobal.db" para continuar.')
 
         if opc:
             try:
@@ -2016,7 +2040,7 @@ class TelaPrincipal(validadorEntradas):
                     n_valores = 'novo usuario'
 
                 # import ipdb; ipdb.set_trace()
-                if int(n_valores) != self.lg_cad_usuario.get():
+                if n_valores != self.lg_cad_usuario.get():
                     self.nova_senha = self.lg_cad_senha.get()
                     self.novo_matricula = self.lg_cad_usuario.get()
                     self.componentes_usuarios(False, nivelAcesso='NIVEL 2')
@@ -2051,10 +2075,14 @@ class TelaPrincipal(validadorEntradas):
 
     def componentes_celendario(self, campo):
         self.master = Toplevel(self.root)
-        self.master.title('Calendar')
-        self.master.grab_set()
-        self.master.geometry('300x275+200+100')
+        self.master.title('Calendario')
+        p = self.centralizacao_tela(352, 377, self.master)
+        self.master.geometry("%dx%d+%d+%d" % (p[0],p[1],p[2],p[3]))
         self.master.resizable(False, False)
+        self.master.grab_set()
+
+        lb_image = Label(self.master,image=self.imagem_calendario)
+        lb_image.place(x=0, y=0)
  
         # App's private variables
         self._months = self._get_month_names()
@@ -2067,18 +2095,13 @@ class TelaPrincipal(validadorEntradas):
         # Configures style for app's widgets
         self._configure_style()
  
-        ttk.Label(self.master, text='Select date and time').place(x=10, y=10)
-        ttk.Frame(self.master, height=2, borderwidth=1, relief='flat', \
-            style='Hor.TFrame')\
-            .place(x=0, y=37, width=523)
- 
         # Date fields
         self._create_date_fields()
 
  
-        ttk.Button(self.master, text='Select', command=lambda:self._select_date_time(campo), \
+        ttk.Button(self.master, text='SELECIONAR', command=lambda:self._select_date_time(campo), \
             style='Select.TButton')\
-            .place(x=106, y=245, width=120, height=40)
+            .place(x=119, y=336, width=124, height=26)
  
     def _get_month_names(self):
         '''Returns list of month names'''
@@ -2112,43 +2135,36 @@ class TelaPrincipal(validadorEntradas):
         '''Contains all style configurations'''
  
         style = ttk.Style()
- 
-        # Root window's background color
-        style.configure('TLabel', background='#e0dfde')
-        style.configure('TButton', background='#e0dfde')
+
  
         # Custom style
-        style.configure('Hor.TFrame', background='#6a9eba')
-        style.configure('Ver.TFrame', background='#000000')
  
         style.configure('TCombobox', selectbackground=[('normal', 'white')])
         style.configure('TCombobox', selectforeground=[('normal', 'black')])
  
-        style.configure('Day.TButton', background='#e0dfde', relief='flat')
-        style.configure('Day.Clicked.TButton', background='#8cd0f5', \
-            relief='flat')
-        style.configure('Select.TButton', background='#6a9eba', \
-            foreground='#ffffff', font=('', 12, 'bold'))
+        style.configure('Day.TButton', background="#D9D9D9", relief='groove',font=('', 12, 'bold'))
+        style.configure('Day.Clicked.TButton',font=('', 15, 'bold'),foreground='#ffffff', background='#888AC1', \
+            relief='groove')
+        style.configure('Select.TButton', background='#676AA9', \
+            foreground='#ffffff', font=('', 10, 'bold'))
  
     def _create_date_fields(self):
         '''Creates all relevant to date fields'''
  
         # Month selection fields
-        ttk.Label(self.master, text='Month:').place(x=10, y=50)
         self._month = StringVar()
-        month_combobox = ttk.Combobox(self.master, width=9, \
-            textvariable=self._month)
-        month_combobox.place(x=58, y=50)
+        month_combobox = ttk.Combobox(self.master, \
+            textvariable=self._month,font=('', 10, 'bold'))
+        month_combobox.place(x=56, y=67, width=88, height=21)
         month_combobox.bind('<<ComboboxSelected>>', self._enable_month_days)
         self._month_combobox = month_combobox
         self._load_months()
  
         # Year selection fields
-        ttk.Label(self.master, text='Year:').place(x=183, y=50)
         self._year = StringVar()
-        year_combobox = ttk.Combobox(self.master, width=9, \
-            textvariable=self._year)
-        year_combobox.place(x=222, y=50)
+        year_combobox = ttk.Combobox(self.master, \
+            textvariable=self._year,font=('', 12, 'bold'))
+        year_combobox.place(x=243, y=69,width=92, height=21)
         year_combobox.bind('<<ComboboxSelected>>', self._enable_month_days)
         self._year_combobox = year_combobox
         self._load_years()
@@ -2156,30 +2172,29 @@ class TelaPrincipal(validadorEntradas):
         # Days of the month buttons
         days_buttons = []
         days = 31
-        x = 35
-        y = 87
+        x = 38
+        y = 105
         for i in range(1, days+1):
             # Creates a button with disabled state
             button = ttk.Button(self.master, text=str(i), style='Day.TButton')
             button.configure(command=lambda btn=button: \
                 self._day_button_callback(btn))
-            button.place(x=x, y=y, width=35, height=35)
+            button.place(x=x, y=y, width=40, height=40)
             button.state(['disabled'])
             days_buttons.append(button)
  
             # Updates the x,y location
-            x += 35
+            x += 40
             if i % 7 == 0:
-                x = 35
-                y += 35
+                x = 38
+                y += 40
         self._days_buttons = days_buttons
- 
- 
+
     def _load_months(self):
         '''Loads months names into combobox'''
                 
         self._month_combobox.configure(values=self._months)
-    
+  
     def _load_years(self):
         '''Loads years into combobox beggining from 1990'''
  
@@ -2189,6 +2204,7 @@ class TelaPrincipal(validadorEntradas):
         years.reverse()
         
         self._year_combobox.configure(values=years)
+        self._year_combobox.current(29)
  
     def _enable_month_days(self, event=None):
         '''Enables relevant days of a selected month'''
@@ -2273,7 +2289,6 @@ class TelaPrincipal(validadorEntradas):
             # return self.date_time
             campo.delete(0, END)
             campo.insert(0, nova_data)
-
 
     def get_date_time(self):
         '''Returns a dictionary of date and time elements'''
